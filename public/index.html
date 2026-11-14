@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Parking Platform | SR University Hackathon 2026</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-badge">SPP</span>
+        <span>Smart Parking Platform</span>
+      </a>
+
+      <button class="menu-toggle" aria-label="Toggle Navigation">☰</button>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="parking-lots.html">Parking Lots</a></li>
+        <li><a href="dashboard.html">User Dashboard</a></li>
+        <li><a href="admin.html">Admin Portal</a></li>
+      </ul>
+
+      <div class="nav-auth">
+        <a href="login.html" class="btn btn-outline btn-sm">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-content">
+          <span class="hero-tag">SR University Hackathon 2026 Project</span>
+          <h1>Smart, Hassle-Free Campus & City Parking</h1>
+          <p>Find available parking spaces in real-time, view interactive slot layouts, and reserve your bay effortlessly in advance.</p>
+          
+          <div class="hero-actions">
+            <a href="parking-lots.html" class="btn btn-secondary">Explore Parking Lots</a>
+            <a href="register.html" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4);">Create Free Account</a>
+          </div>
+
+          <!-- Search Parking Box -->
+          <form class="hero-search-box" action="parking-lots.html" method="GET">
+            <input type="text" name="search" placeholder="Search by parking lot name, block or location (e.g. Science Block, Zone A)..." required>
+            <button type="submit" class="btn btn-primary">Search Parking</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Key Statistics -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <h3>Connected Lots</h3>
+            <div class="stat-number">4</div>
+          </div>
+          <div class="stat-icon">🏢</div>
+        </div>
+
+        <div class="stat-card stat-available">
+          <div class="stat-info">
+            <h3>Available Slots</h3>
+            <div class="stat-number">42</div>
+          </div>
+          <div class="stat-icon">🟢</div>
+        </div>
+
+        <div class="stat-card stat-occupied">
+          <div class="stat-info">
+            <h3>Occupied Slots</h3>
+            <div class="stat-number">28</div>
+          </div>
+          <div class="stat-icon">🔴</div>
+        </div>
+
+        <div class="stat-card stat-reserved">
+          <div class="stat-info">
+            <h3>Reserved Slots</h3>
+            <div class="stat-number">10</div>
+          </div>
+          <div class="stat-icon">🟠</div>
+        </div>
+      </section>
+
+      <!-- Project Introduction & Features -->
+      <section style="margin-top: 40px;">
+        <h2 class="section-title">Why Smart Parking Platform?</h2>
+        <p class="section-subtitle">A modern solution tackling parking congestion, fuel wastage, and delays across campus and commercial facilities.</p>
+
+        <div class="features-grid">
+          <div class="feature-box">
+            <div class="feature-icon">📍</div>
+            <h3>Real-Time Lot Discovery</h3>
+            <p>Locate campus parking zones and commercial garages with updated slot availability counts before arriving.</p>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon">🟩</div>
+            <h3>Visual Slot Selection</h3>
+            <p>Interactive color-coded parking grid showing available, occupied, and reserved slots for intuitive bay choice.</p>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon">⏱️</div>
+            <h3>Scheduled Reservations</h3>
+            <p>Book parking spots for specific arrival dates and durations with transparent pricing and instant digital receipts.</p>
+          </div>
+
+          <div class="feature-box">
+            <div class="feature-icon">🛡️</div>
+            <h3>Role-Based Portals</h3>
+            <p>Dedicated self-service dashboard for drivers and comprehensive administrative tools to manage lots, bays, and logs.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section class="card" style="margin-bottom: 40px; background: #ffffff;">
+        <h3 class="card-title" style="text-align: center; margin-bottom: 24px;">How It Works in 3 Simple Steps</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; text-align: center;">
+          <div style="padding: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-weight: 800; font-size: 1.2rem;">1</div>
+            <h4 style="color: var(--primary); margin-bottom: 6px;">Select Parking Lot</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">Choose your desired campus block or facility based on proximity and live slot availability.</p>
+          </div>
+
+          <div style="padding: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-weight: 800; font-size: 1.2rem;">2</div>
+            <h4 style="color: var(--primary); margin-bottom: 6px;">Pick a Green Bay</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">Inspect the 2D visual layout and pick an open slot that fits your vehicle size.</p>
+          </div>
+
+          <div style="padding: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-weight: 800; font-size: 1.2rem;">3</div>
+            <h4 style="color: var(--primary); margin-bottom: 6px;">Reserve & Park</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">Select duration, confirm your booking, and navigate straight to your reserved bay.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div>
+        <span class="footer-tag">Smart Parking Platform</span> — SR University Web Technologies & Mobile Programming Hackathon 2026
+      </div>
+      <div>
+        <span>Built with HTML5, CSS3, JavaScript, Node.js & MongoDB</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

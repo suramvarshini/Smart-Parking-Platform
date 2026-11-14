@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Smart Parking Platform</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .admin-tab-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+    .admin-tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-badge" style="background:#b91c1c;">ADMIN</span>
+        <span>Smart Parking Platform</span>
+      </a>
+
+      <button class="menu-toggle" aria-label="Toggle Navigation">☰</button>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="parking-lots.html">Parking Lots</a></li>
+        <li><a href="dashboard.html">User Dashboard</a></li>
+        <li><a href="admin.html" class="active">Admin Portal</a></li>
+      </ul>
+
+      <div class="nav-auth">
+        <span style="font-size:0.85rem; font-weight:700; color:var(--status-occupied); margin-right:8px;">Admin: SRU Facilities</span>
+        <a href="login.html" class="btn btn-outline btn-sm">Sign Out</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      
+      <!-- Admin Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Campus Facility Administration</h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Manage campus parking infrastructure, adjust slot availability and monitor reservations.</p>
+        </div>
+        <div>
+          <button id="openAddLotModal" class="btn btn-primary">+ Add New Parking Lot</button>
+        </div>
+      </div>
+
+      <!-- Overview Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <h3>Total Facilities</h3>
+            <div class="stat-number">4 Lots</div>
+          </div>
+          <div class="stat-icon">🏢</div>
+        </div>
+
+        <div class="stat-card stat-available">
+          <div class="stat-info">
+            <h3>Active Bays</h3>
+            <div class="stat-number">80 Total</div>
+          </div>
+          <div class="stat-icon">🅿️</div>
+        </div>
+
+        <div class="stat-card stat-occupied">
+          <div class="stat-info">
+            <h3>Live Occupancy</h3>
+            <div class="stat-number">47.5%</div>
+          </div>
+          <div class="stat-icon">📊</div>
+        </div>
+
+        <div class="stat-card stat-reserved">
+          <div class="stat-info">
+            <h3>Today's Bookings</h3>
+            <div class="stat-number">38 Pass</div>
+          </div>
+          <div class="stat-icon">🎟️</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="admin-nav-tabs">
+        <button class="admin-tab-btn active" data-target="lotsSection">🏢 Parking Lot Management</button>
+        <button class="admin-tab-btn" data-target="slotsSection">🅿️ Slot Management</button>
+        <button class="admin-tab-btn" data-target="bookingsSection">📑 Bookings & Reservations Overview</button>
+      </div>
+
+      <!-- SECTION 1: PARKING LOT MANAGEMENT -->
+      <section id="lotsSection" class="admin-section">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 class="card-title" style="margin-bottom:0;">Registered Parking Lots</h2>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">4 Active Facilities</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Facility Name</th>
+                  <th>Location / Gate</th>
+                  <th>Capacity</th>
+                  <th>Hourly Tariff</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminLotsTableBody">
+                <tr>
+                  <td><strong>SRU Main Academic Block</strong></td>
+                  <td>📍 North Campus, Gate 1</td>
+                  <td>20 Bays</td>
+                  <td>₹20/hr</td>
+                  <td><span class="badge badge-available">Operational</span></td>
+                  <td>
+                    <a href="slot-selection.html?lotId=lot-1&lotName=SRU%20Main%20Academic%20Block" class="btn btn-outline btn-sm">Inspect Bays</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Science & Tech Tower (Zone B)</strong></td>
+                  <td>📍 East Campus, Near CS Labs</td>
+                  <td>20 Bays</td>
+                  <td>₹25/hr</td>
+                  <td><span class="badge badge-available">Operational</span></td>
+                  <td>
+                    <a href="slot-selection.html?lotId=lot-2&lotName=Science%20%26%20Tech%20Tower%20Zone%20B" class="btn btn-outline btn-sm">Inspect Bays</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Sports Complex & Auditorium</strong></td>
+                  <td>📍 South Campus, Beside Stadium</td>
+                  <td>20 Bays</td>
+                  <td>₹15/hr</td>
+                  <td><span class="badge badge-available">Operational</span></td>
+                  <td>
+                    <a href="slot-selection.html?lotId=lot-3&lotName=Sports%20Complex%20%26%20Auditorium" class="btn btn-outline btn-sm">Inspect Bays</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Central Library Basement</strong></td>
+                  <td>📍 Central Campus, Lower Level</td>
+                  <td>20 Bays</td>
+                  <td>₹30/hr</td>
+                  <td><span class="badge badge-available">Operational</span></td>
+                  <td>
+                    <a href="slot-selection.html?lotId=lot-4&lotName=Central%20Library%20Basement" class="btn btn-outline btn-sm">Inspect Bays</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: SLOT MANAGEMENT -->
+      <section id="slotsSection" class="admin-section" style="display: none;">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="card-title" style="margin-bottom:2px;">Individual Slot Bay Control</h2>
+              <p class="card-subtitle" style="margin-bottom:0;">Filter slots and manually override status (e.g. for maintenance or emergency hold)</p>
+            </div>
+            <div>
+              <select class="form-control" style="width: auto; display: inline-block;">
+                <option>SRU Main Academic Block (Lane A & B)</option>
+                <option>Science & Tech Tower (Zone B)</option>
+                <option>Sports Complex & Auditorium</option>
+                <option>Central Library Basement</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Slot Number</th>
+                  <th>Lane / Section</th>
+                  <th>Vehicle Bay Type</th>
+                  <th>Current State</th>
+                  <th>Manual Override</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Bay A-01</strong></td>
+                  <td>Lane A (North Gate)</td>
+                  <td>Standard 4-Wheeler</td>
+                  <td><span class="badge badge-available slot-badge">Available</span></td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Occupied</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Bay A-02</strong></td>
+                  <td>Lane A (North Gate)</td>
+                  <td>Standard 4-Wheeler</td>
+                  <td><span class="badge badge-occupied slot-badge">Occupied</span></td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Available</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Bay A-03</strong></td>
+                  <td>Lane A (North Gate)</td>
+                  <td>Standard 4-Wheeler</td>
+                  <td><span class="badge badge-reserved slot-badge">Reserved</span></td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Available</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Bay A-05</strong></td>
+                  <td>Lane A (North Gate)</td>
+                  <td>EV Fast Charge Bay</td>
+                  <td><span class="badge badge-available slot-badge">Available</span></td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Occupied</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Bay B-01</strong></td>
+                  <td>Lane B (South Wing)</td>
+                  <td>Standard 4-Wheeler</td>
+                  <td><span class="badge badge-available slot-badge">Available</span></td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Occupied</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: BOOKINGS OVERVIEW -->
+      <section id="bookingsSection" class="admin-section" style="display: none;">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h2 class="card-title" style="margin-bottom:2px;">All Platform Reservations</h2>
+              <p class="card-subtitle" style="margin-bottom:0;">Live log of user bookings and bay occupancy</p>
+            </div>
+            <div>
+              <input type="text" class="form-control" placeholder="Search by Pass # or Vehicle..." style="width: 240px; font-size: 0.85rem;">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Pass ID</th>
+                  <th>Driver Name</th>
+                  <th>Vehicle No</th>
+                  <th>Facility & Slot</th>
+                  <th>Scheduled Time</th>
+                  <th>Fee</th>
+                  <th>Status</th>
+                  <th>Marshal Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>#BK-9481</strong></td>
+                  <td>Rahul Sharma</td>
+                  <td>TS 03 AB 1234</td>
+                  <td>Main Block (Bay A-04)</td>
+                  <td>Today, 12:00 - 14:00</td>
+                  <td>₹40</td>
+                  <td><span class="badge badge-available booking-badge">Active</span></td>
+                  <td>
+                    <button class="btn btn-danger btn-sm" onclick="releaseBooking(this, '9481')">Release Slot</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>#BK-9475</strong></td>
+                  <td>Priya Nair</td>
+                  <td>TS 09 XY 5678</td>
+                  <td>Science Tower (Bay B-05)</td>
+                  <td>Today, 11:30 - 13:30</td>
+                  <td>₹50</td>
+                  <td><span class="badge badge-reserved booking-badge">Reserved</span></td>
+                  <td>
+                    <button class="btn btn-danger btn-sm" onclick="releaseBooking(this, '9475')">Release Slot</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>#BK-9310</strong></td>
+                  <td>Dr. K. Srinivas</td>
+                  <td>TS 01 CD 9012</td>
+                  <td>Central Library (Bay C-02)</td>
+                  <td>Today, 10:00 - 12:00</td>
+                  <td>₹60</td>
+                  <td><span class="badge badge-info booking-badge">Checked-In</span></td>
+                  <td>
+                    <button class="btn btn-danger btn-sm" onclick="releaseBooking(this, '9310')">Release Slot</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>#BK-9204</strong></td>
+                  <td>Anil Kumar</td>
+                  <td>AP 29 ZZ 3421</td>
+                  <td>Sports Complex (Bay D-01)</td>
+                  <td>Yesterday, 14:00 - 17:00</td>
+                  <td>₹45</td>
+                  <td><span class="badge badge-reserved booking-badge">Completed</span></td>
+                  <td>
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Archived</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Add Parking Lot Modal -->
+  <div id="addLotModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; width:90%; max-width:500px; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
+        <h3 style="color:var(--primary); margin:0;">Add Campus Parking Facility</h3>
+        <button id="closeAddLotModal" style="border:none; background:none; font-size:1.4rem; cursor:pointer;">✕</button>
+      </div>
+
+      <form id="addLotForm">
+        <div class="form-group">
+          <label class="form-label" for="newLotName">Parking Lot Name</label>
+          <input type="text" id="newLotName" class="form-control" placeholder="e.g. Mechanical Block Lot D" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newLotLoc">Location / Landmark</label>
+          <input type="text" id="newLotLoc" class="form-control" placeholder="e.g. West Campus, Gate 3" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="newLotCap">Total Slot Capacity</label>
+            <input type="number" id="newLotCap" class="form-control" placeholder="25" min="1" max="200" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newLotRate">Hourly Tariff (₹)</label>
+            <input type="number" id="newLotRate" class="form-control" placeholder="20" min="0" required>
+          </div>
+        </div>
+
+        <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('addLotModal').style.display='none'">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Parking Facility</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div>
+        <span class="footer-tag">Smart Parking Platform</span> — SR University Hackathon 2026
+      </div>
+      <div>
+        <span>Facility Operations & Management Console</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

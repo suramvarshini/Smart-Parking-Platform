@@ -26,8 +26,8 @@
       </ul>
 
       <div class="nav-auth">
-        <span style="font-size:0.9rem; font-weight:600; color:var(--primary); margin-right:8px;">Hi, Rahul</span>
-        <a href="login.html" class="btn btn-outline btn-sm">Logout</a>
+        <span id="userGreeting" style="font-size:0.9rem; font-weight:600; color:var(--primary); margin-right:8px;">Hi, User</span>
+        <button onclick="handleLogout()" class="btn btn-outline btn-sm">Logout</button>
       </div>
     </div>
   </nav>
@@ -39,7 +39,10 @@
       <!-- Dashboard Top Header -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
         <div>
-          <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Driver Dashboard</h1>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 0;">Driver Dashboard</h1>
+            <span class="badge badge-info" id="userRoleBadge">ROLE: USER</span>
+          </div>
           <p style="color: var(--text-muted); font-size: 0.95rem;">Monitor live parking availability and manage your current reservations.</p>
         </div>
         <div>
@@ -191,6 +194,32 @@
 
   <script src="js/main.js"></script>
   <script>
+    // Fetch authenticated user identity
+    async function initUserDashboard() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            document.getElementById('userGreeting').textContent = `Hi, ${data.user.name}`;
+            document.getElementById('userRoleBadge').textContent = `ROLE: ${data.user.role}`;
+          }
+        }
+      } catch (e) {
+        console.error('Session load error', e);
+      }
+    }
+    initUserDashboard();
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {
+        console.error(e);
+      }
+      window.location.href = 'login.html';
+    }
+
     function filterBookings(status) {
       const rows = document.querySelectorAll('#bookingsBody tr');
       rows.forEach(row => {

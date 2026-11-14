@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Denied (403) | Smart Parking Platform</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-badge">SPP</span>
+        <span>Smart Parking Platform</span>
+      </a>
+
+      <div class="nav-auth">
+        <a href="dashboard.html" class="btn btn-primary btn-sm">User Dashboard</a>
+        <button onclick="handleLogout()" class="btn btn-outline btn-sm">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      
+      <div class="card" style="max-width: 580px; margin: 60px auto; text-align: center; border-top: 5px solid var(--status-occupied); padding: 40px 30px;">
+        <div style="font-size: 3.5rem; margin-bottom: 12px;">🚫</div>
+        <span class="badge badge-occupied" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 14px;">HTTP 403 - FORBIDDEN</span>
+        
+        <h1 style="font-size: 1.9rem; font-weight: 800; color: var(--primary); margin: 12px 0 8px;">Access Denied</h1>
+        <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; margin-bottom: 24px;">
+          You do not have administrative privileges to view or manage the <strong>Admin Portal</strong>. Your account is authenticated with the standard <strong>USER</strong> role.
+        </p>
+
+        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; text-align: left; font-size: 0.88rem; margin-bottom: 24px;">
+          <div style="color: var(--primary); font-weight: 700; margin-bottom: 4px;">Security Policy Enforcement:</div>
+          <ul style="margin-left: 20px; color: var(--text-muted);">
+            <li>Direct URL navigation to administrative pages is blocked on the server.</li>
+            <li>Administrative functions require authenticated credentials with role <code>ADMIN</code>.</li>
+          </ul>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <a href="dashboard.html" class="btn btn-primary">Return to User Dashboard</a>
+          <a href="login.html" class="btn btn-outline">Sign In with Admin Account</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div>
+        <span class="footer-tag">Smart Parking Platform</span> — SR University Hackathon 2026
+      </div>
+      <div>
+        <span>Role-Based Access Control (RBAC) System</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {
+        console.error(e);
+      }
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

@@ -51,8 +51,8 @@
       </ul>
 
       <div class="nav-auth">
-        <span style="font-size:0.85rem; font-weight:700; color:var(--status-occupied); margin-right:8px;">Admin: SRU Facilities</span>
-        <a href="login.html" class="btn btn-outline btn-sm">Sign Out</a>
+        <span id="adminGreeting" style="font-size:0.85rem; font-weight:700; color:var(--status-occupied); margin-right:8px;">Admin: SRU Facilities</span>
+        <button onclick="handleLogout()" class="btn btn-outline btn-sm">Sign Out</button>
       </div>
     </div>
   </nav>
@@ -64,7 +64,10 @@
       <!-- Admin Header -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
         <div>
-          <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Campus Facility Administration</h1>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 0;">Campus Facility Administration</h1>
+            <span class="badge badge-occupied">ROLE: ADMIN</span>
+          </div>
           <p style="color: var(--text-muted); font-size: 0.95rem;">Manage campus parking infrastructure, adjust slot availability and monitor reservations.</p>
         </div>
         <div>
@@ -400,5 +403,30 @@
 
   <script src="js/main.js"></script>
   <script src="js/admin.js"></script>
+  <script>
+    async function initAdminDashboard() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            document.getElementById('adminGreeting').textContent = `Admin: ${data.user.name}`;
+          }
+        }
+      } catch (e) {
+        console.error('Admin session error', e);
+      }
+    }
+    initAdminDashboard();
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {
+        console.error(e);
+      }
+      window.location.href = 'login.html';
+    }
+  </script>
 </body>
 </html>

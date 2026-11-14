@@ -62,6 +62,12 @@ The **Smart Parking Platform (SPP)** is a full-stack, responsive web application
 * **Slot Bay Control & Overrides:** Manually toggle slot status between Available and Occupied for maintenance or VIP arrival.
 * **Live Reservation Ledger:** Monitor all active and completed bookings with quick release actions.
 
+### Security & Role-Based Access Control (RBAC):
+* **Strict Server-Side Authorization:** Zero reliance on client-side localStorage; authorization validated against MongoDB sessions.
+* **Protected Administrative URLs:** Direct URL navigation to `/admin.html` by standard users strictly yields HTTP 403 Access Denied.
+* **Privilege Escalation Prevention:** Registration API enforces `USER` role and ignores self-assignment of `ADMIN`.
+* **Stateful Sessions:** Secure, `HttpOnly` cookie-backed sessions stored in MongoDB with 24-hour TTL.
+
 ---
 
 ## Slide 7: Technology Stack

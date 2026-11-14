@@ -3,6 +3,21 @@
  * SR University Web Technologies & Mobile Programming Hackathon 2026
  */
 
+// Global Notification / Alert helper (available immediately)
+window.showAlert = function (message, type = 'info') {
+  const alertBox = document.createElement('div');
+  alertBox.className = `alert alert-${type}`;
+  alertBox.innerHTML = `
+    <span>${message}</span>
+    <button style="background:none;border:none;cursor:pointer;font-weight:bold;margin-left:12px;" onclick="this.parentElement.remove()">✕</button>
+  `;
+  const container = document.querySelector('.main-content .container');
+  if (container) {
+    container.insertBefore(alertBox, container.firstChild);
+    setTimeout(() => alertBox.remove(), 4000);
+  }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Mobile Menu Toggle
   const toggleBtn = document.querySelector('.menu-toggle');
@@ -23,19 +38,4 @@ document.addEventListener('DOMContentLoaded', () => {
       link.classList.add('active');
     }
   });
-
-  // 3. Simple Notification / Alert helper
-  window.showAlert = function (message, type = 'info') {
-    const alertBox = document.createElement('div');
-    alertBox.className = `alert alert-${type}`;
-    alertBox.innerHTML = `
-      <span>${message}</span>
-      <button style="background:none;border:none;cursor:pointer;font-weight:bold;margin-left:12px;" onclick="this.parentElement.remove()">✕</button>
-    `;
-    const container = document.querySelector('.main-content .container');
-    if (container) {
-      container.insertBefore(alertBox, container.firstChild);
-      setTimeout(() => alertBox.remove(), 4000);
-    }
-  };
 });

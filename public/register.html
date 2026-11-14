@@ -48,21 +48,21 @@
             <div class="form-group">
               <label for="fullName" class="form-label">Full Name</label>
               <input type="text" id="fullName" name="name" class="form-control" placeholder="e.g. Rahul Sharma" required minlength="3">
-              <span class="form-hint">Enter your legal or campus ID name</span>
+              <span class="form-hint">Enter your full student or staff name</span>
             </div>
 
             <!-- Email Address -->
             <div class="form-group">
               <label for="email" class="form-label">Email Address</label>
               <input type="email" id="email" name="email" class="form-control" placeholder="e.g. rahul@sru.edu.in" required>
-              <span class="form-hint">Used for booking receipts and verification</span>
+              <span class="form-hint">Your login email for digital parking passes</span>
             </div>
 
             <!-- Phone Number -->
             <div class="form-group">
               <label for="phone" class="form-label">Phone Number</label>
               <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. 9876543210" required pattern="[0-9]{10}">
-              <span class="form-hint">10-digit mobile number for SMS bay alerts</span>
+              <span class="form-hint">10-digit mobile number for bay confirmation</span>
             </div>
 
             <!-- Password -->
@@ -72,13 +72,17 @@
               <span class="form-hint">Must be at least 6 characters long</span>
             </div>
 
-            <!-- Vehicle Number (Optional student extra) -->
+            <!-- Vehicle Number -->
             <div class="form-group">
               <label for="vehicleNo" class="form-label">Vehicle Registration Number (Optional)</label>
               <input type="text" id="vehicleNo" name="vehicleNo" class="form-control" placeholder="e.g. TS 03 AB 1234">
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 10px;">Create Account</button>
+            <div class="alert alert-info" style="font-size: 0.8rem; padding: 10px 14px; margin-bottom: 16px;">
+              🛡️ Note: All registrations are automatically assigned the standard <strong>USER</strong> role. Administrative accounts are strictly provisioned by facility supervisors.
+            </div>
+
+            <button type="submit" id="regSubmitBtn" class="btn btn-primary btn-block">Create Account</button>
           </form>
 
           <div class="auth-footer">
@@ -97,30 +101,56 @@
         <span class="footer-tag">Smart Parking Platform</span> — SR University Hackathon 2026
       </div>
       <div>
-        <span>Frontend Design System</span>
+        <span>User Registration Service</span>
       </div>
     </div>
   </footer>
 
   <script src="js/main.js"></script>
   <script>
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
       e.preventDefault();
+      const submitBtn = document.getElementById('regSubmitBtn');
       const name = document.getElementById('fullName').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const password = document.getElementById('password').value;
+      const vehicleNo = document.getElementById('vehicleNo').value.trim();
 
       if (!name || !email || !phone || !password) {
         window.showAlert('Please fill in all required fields.', 'warning');
         return;
       }
 
-      // Simulate clean frontend validation & transition
-      window.showAlert(`Account registered successfully for ${name}! Redirecting to login...`, 'success');
-      setTimeout(() => {
-        window.location.href = 'login.html?registered=true';
-      }, 1500);
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering Account...';
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, phone, password, vehicleNo })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          window.showAlert(data.error || 'Registration failed.', 'warning');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Account';
+          return;
+        }
+
+        window.showAlert(`Account registered successfully for ${name}! Redirecting to login...`, 'success');
+        setTimeout(() => {
+          window.location.href = 'login.html?registered=true';
+        }, 1200);
+      } catch (err) {
+        console.error('Registration error:', err);
+        window.showAlert('Unable to connect to the server.', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+      }
     });
   </script>
 </body>

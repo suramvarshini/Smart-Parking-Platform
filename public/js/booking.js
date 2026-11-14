@@ -1,20 +1,22 @@
 /**
- * Smart Parking Platform - Booking Page Logic
+ * Smart Parking Platform - Real Booking Submission & Confirmation Logic
  * SR University Web Technologies & Mobile Programming Hackathon 2026
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const lot = urlParams.get('lot') || 'SRU Main Academic Block';
-  const slot = urlParams.get('slot') || 'A-01';
+  const lotId = urlParams.get('lotId');
+  const slotId = urlParams.get('slotId');
+  const lotName = urlParams.get('lot') || 'Campus Parking Facility';
+  const slotNo = urlParams.get('slot') || 'Bay';
   const rate = parseInt(urlParams.get('rate') || '20', 10);
 
-  // Set default values in summary & inputs
-  document.getElementById('summaryLot').textContent = lot;
-  document.getElementById('summarySlot').textContent = slot;
+  // Set default view values
+  document.getElementById('summaryLot').textContent = lotName;
+  document.getElementById('summarySlot').textContent = slotNo;
   document.getElementById('summaryRate').textContent = `₹${rate} / hr`;
-  document.getElementById('formSlot').value = slot;
-  document.getElementById('formLot').value = lot;
+  document.getElementById('formSlot').value = slotNo;
+  document.getElementById('formLot').value = lotName;
 
   // Set default date to today
   const today = new Date().toISOString().split('T')[0];
@@ -32,6 +34,22 @@ document.addEventListener('DOMContentLoaded', () => {
     timeInput.value = `${hours}:00`;
   }
 
+  // Pre-fill user profile if authenticated
+  try {
+    const meRes = await fetch('/api/auth/me');
+    if (meRes.ok) {
+      const meData = await meRes.json();
+      if (meData.user) {
+        const nameInput = document.getElementById('driverName');
+        const phoneInput = document.getElementById('contactPhone');
+        if (nameInput && !nameInput.value) nameInput.value = meData.user.name;
+        if (phoneInput && !phoneInput.value) phoneInput.value = meData.user.phone || '';
+      }
+    }
+  } catch (e) {
+    console.error('User profile pre-fill error:', e);
+  }
+
   // Cost calculator
   function updateCost() {
     const duration = parseInt(document.getElementById('duration').value, 10) || 1;
@@ -46,40 +64,80 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('duration').addEventListener('change', updateCost);
   updateCost();
 
-  // Handle Form Submission
+  // Handle Real Form Submission
   const bookingForm = document.getElementById('bookingForm');
-  bookingForm.addEventListener('submit', (e) => {
+  bookingForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const submitBtn = bookingForm.querySelector('button[type="submit"]');
     const driverName = document.getElementById('driverName').value.trim();
-    const vehicleNo = document.getElementById('vehicleNumber').value.trim();
+    const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+    const vehicleType = document.getElementById('vehicleType').value;
     const bookingDate = document.getElementById('bookingDate').value;
     const startTime = document.getElementById('startTime').value;
     const duration = document.getElementById('duration').value;
-    const totalCost = document.getElementById('summaryTotal').textContent;
 
-    if (!driverName || !vehicleNo || !bookingDate || !startTime) {
+    if (!driverName || !vehicleNumber || !bookingDate || !startTime) {
       window.showAlert('Please fill in all booking details.', 'warning');
       return;
     }
 
-    // Hide form and show Confirmation Voucher
-    const bookingView = document.getElementById('bookingView');
-    const confirmationView = document.getElementById('confirmationView');
+    if (!lotId || !slotId) {
+      window.showAlert('Missing parking facility or slot reference. Please select your slot from the layout first.', 'warning');
+      setTimeout(() => window.location.href = 'parking-lots.html', 1500);
+      return;
+    }
 
-    const bookingId = 'BK-' + Math.floor(1000 + Math.random() * 9000);
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing Reservation with Database...';
 
-    document.getElementById('confBookingId').textContent = '#' + bookingId;
-    document.getElementById('confLot').textContent = lot;
-    document.getElementById('confSlot').textContent = slot;
-    document.getElementById('confDriver').textContent = driverName;
-    document.getElementById('confVehicle').textContent = vehicleNo;
-    document.getElementById('confSchedule').textContent = `${bookingDate} at ${startTime} (${duration} hrs)`;
-    document.getElementById('confTotal').textContent = totalCost;
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parkingLotId: lotId,
+          parkingSlotId: slotId,
+          vehicleNumber,
+          vehicleType,
+          bookingDate,
+          startTime,
+          duration
+        })
+      });
 
-    bookingView.style.display = 'none';
-    confirmationView.style.display = 'block';
+      const data = await res.json();
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!res.ok || !data.success) {
+        window.showAlert(data.error || 'Failed to complete booking reservation.', 'warning');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Confirm Reservation & Generate Digital Pass';
+        return;
+      }
+
+      const booking = data.booking;
+
+      // Populate confirmation view with real MongoDB data
+      const bookingView = document.getElementById('bookingView');
+      const confirmationView = document.getElementById('confirmationView');
+
+      document.getElementById('confBookingId').textContent = '#' + booking.bookingId;
+      document.getElementById('confLot').textContent = booking.parkingLot ? booking.parkingLot.name : lotName;
+      document.getElementById('confSlot').textContent = booking.parkingSlot ? booking.parkingSlot.slotNumber : slotNo;
+      document.getElementById('confDriver').textContent = driverName;
+      document.getElementById('confVehicle').textContent = `${booking.vehicleNumber} (${booking.vehicleType})`;
+      document.getElementById('confSchedule').textContent = `${booking.bookingDate} | ${booking.startTime} - ${booking.endTime} (${booking.duration} hrs)`;
+      document.getElementById('confTotal').textContent = `₹${booking.totalAmount}`;
+
+      bookingView.style.display = 'none';
+      confirmationView.style.display = 'block';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      console.error('Booking submission error:', err);
+      window.showAlert('Network error while processing booking.', 'warning');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Confirm Reservation & Generate Digital Pass';
+    }
   });
 });

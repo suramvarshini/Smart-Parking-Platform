@@ -86,36 +86,48 @@ The **Smart Parking Platform (SPP)** is a full-stack, responsive web application
 
 ---
 
-## Slide 8: System Architecture
+## Slide 8: System Architecture & Database Design
 ```
 +-------------------------------------------------------------+
 |                     CLIENT TIER (Frontend)                 |
 |  - HTML5 Pages (Landing, Lots, Grid, Booking, Dashboards)   |
 |  - Vanilla JavaScript Modules (slots.js, booking.js, main) |
-|  - Custom Responsive CSS (style.css)                        |
+|  - Fetch API calls to Express REST Endpoints                |
 +------------------------------+------------------------------+
                                |  HTTP / JSON (REST API)
                                v
 +-------------------------------------------------------------+
 |                    APPLICATION SERVER TIER                  |
-|  - Node.js & Express.js Server (server.js)                 |
-|  - Static Asset Middleware (public/)                        |
-|  - RESTful Endpoints (Lots, Slots, Bookings, Auth)          |
-|  - Business Logic & Slot State Validation                   |
+|  - Node.js & Express.js REST API Engine (server.js)        |
+|  - Role-Based Access Control Middlewares (requireAdmin)     |
+|  - Time-Window Conflict Detection & Overlap Validator       |
+|  - Mongoose ODM Layer (Port 27017)                          |
 +------------------------------+------------------------------+
-                               |  Mongoose ODM (Port 27017)
+                               |  MongoDB Connection (smart_parking_db)
                                v
 +-------------------------------------------------------------+
-|                      DATA TIER (Database)                   |
-|  - MongoDB (smart_parking database)                         |
-|  - Collections: Users, Lots, Slots, Reservations            |
+|                      DATA TIER (MongoDB)                    |
+|  - User Collection (role, email, hashPassword)              |
+|  - ParkingLot Collection (name, location, total/available)  |
+|  - ParkingSlot Collection (ref: ParkingLot, unique bay No)  |
+|  - Booking Collection (ref: User, ParkingLot, ParkingSlot)  |
+|  - Session Collection (stateful RBAC sessions, 24h TTL)     |
 +-------------------------------------------------------------+
 ```
 
 ---
 
-## Slide 9: Expected Output & Deliverables
+## Slide 9: Booking Conflict Prevention & Database Safety
+* **Time-Window Overlap Detection:** A booking conflict is detected if:
+  `requestedStartTime < existingEndTime && requestedEndTime > existingStartTime`
+* **Dynamic Time-Based Availability:** Slots are not marked permanently occupied for future bookings; availability is calculated dynamically for the requested arrival window.
+* **Database Referential Integrity:** Mongoose schemas link Bookings to Users, ParkingLots, and ParkingSlots with compound unique indexes (`{ parkingLot: 1, slotNumber: 1 }`).
+* **Atomic State Updates:** Live counts (`totalSlots` and `availableSlots`) are synchronized automatically upon booking creation or cancellation.
+
+---
+
+## Slide 10: Expected Output & Test Verification
 1. **Fully Working Responsive UI:** Clean multi-page frontend covering all 8 hackathon module specifications.
-2. **Visual Color-Coded Bay Map:** Clear visual representation of open, occupied, and reserved parking bays.
-3. **End-to-End User Flow:** Seamless progression from Lot Discovery → Slot Selection → Duration & Details → Instant Booking Voucher.
-4. **Faculty Evaluation Ready:** Beginner-friendly, modular code with transparent variable names and zero AI boilerplate fluff.
+2. **Real MongoDB Persistence:** 5 active Mongoose collections in `smart_parking_db` storing users, lots, slots, sessions, and bookings.
+3. **16/16 Thunder Client REST API Test Cases Passed:** Verified registration, duplicate email rejection, role-based security, booking creation, double-booking rejection, and booking cancellation.
+4. **Faculty Evaluation Ready:** Beginner-friendly, modular code with transparent variable names, clean documentation, and zero AI boilerplate fluff.

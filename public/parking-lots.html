@@ -38,8 +38,8 @@
       
       <!-- Page Header -->
       <div style="margin-bottom: 24px;">
-        <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Available Campus Parking Lots</h1>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">Select a facility to view its real-time bay availability and visual parking layout.</p>
+        <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Available Campus Parking Facilities</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Select a facility to view its real-time bay availability and visual parking layout from MongoDB.</p>
       </div>
 
       <!-- Filter / Search Toolbar -->
@@ -49,207 +49,18 @@
             <input type="text" id="lotSearchInput" class="form-control" placeholder="Search by parking lot name or location (e.g. Science, Zone, Main)..." onkeyup="filterLots()">
           </div>
           <div style="display: flex; gap: 10px;">
-            <button class="btn btn-outline btn-sm" onclick="filterByAvailability('all')">All Lots</button>
-            <button class="btn btn-outline btn-sm" onclick="filterByAvailability('available')">Only Available</button>
+            <button class="btn btn-outline btn-sm" id="btnFilterAll" onclick="setAvailabilityFilter('all')">All Lots</button>
+            <button class="btn btn-outline btn-sm" id="btnFilterAvail" onclick="setAvailabilityFilter('available')">Only Available</button>
           </div>
         </div>
       </div>
 
-      <!-- Parking Lots Grid -->
+      <!-- Parking Lots Grid (Populated dynamically via Fetch API) -->
       <div class="lot-grid" id="lotsContainer">
-        
-        <!-- Lot 1: Main Academic Block -->
-        <div class="lot-card" data-name="SRU Main Academic Block" data-location="North Campus, Gate 1" data-avail="12">
-          <div class="lot-header">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <h2 class="lot-title">SRU Main Academic Block</h2>
-              <span class="badge badge-available">Open</span>
-            </div>
-            <div class="lot-location">
-              <span>📍 North Campus, Opposite Admin Office (Gate 1)</span>
-            </div>
-          </div>
-
-          <div class="lot-body">
-            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
-              Paved ground-level lot with CCTV monitoring and EV fast-charging ports. Ideal for classroom and administration access.
-            </p>
-
-            <div class="lot-stats">
-              <div class="lot-stat-item">
-                <span>Total</span>
-                <strong>20</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Available</span>
-                <strong style="color: var(--status-available);">12</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Occupied</span>
-                <strong style="color: var(--status-occupied);">6</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Reserved</span>
-                <strong style="color: var(--status-reserved);">2</strong>
-              </div>
-            </div>
-          </div>
-
-          <div class="lot-footer">
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Hourly Rate</span>
-              <strong style="font-size: 1.1rem; color: var(--primary);">₹20 / hr</strong>
-            </div>
-            <a href="slot-selection.html?lotId=lot-1&lotName=SRU%20Main%20Academic%20Block&rate=20" class="btn btn-primary btn-sm">
-              View Slots & Layout →
-            </a>
-          </div>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+          <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+          Loading parking facilities from database...
         </div>
-
-        <!-- Lot 2: Science & Tech Tower -->
-        <div class="lot-card" data-name="Science & Tech Tower Zone B" data-location="East Campus, Near CS Labs" data-avail="8">
-          <div class="lot-header">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <h2 class="lot-title">Science & Tech Tower (Zone B)</h2>
-              <span class="badge badge-available">Open</span>
-            </div>
-            <div class="lot-location">
-              <span>📍 East Campus, Beside Computer Science Labs</span>
-            </div>
-          </div>
-
-          <div class="lot-body">
-            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
-              Multi-lane shaded parking zone with dedicated bays for four-wheelers and high-speed boom barrier entry.
-            </p>
-
-            <div class="lot-stats">
-              <div class="lot-stat-item">
-                <span>Total</span>
-                <strong>20</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Available</span>
-                <strong style="color: var(--status-available);">8</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Occupied</span>
-                <strong style="color: var(--status-occupied);">9</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Reserved</span>
-                <strong style="color: var(--status-reserved);">3</strong>
-              </div>
-            </div>
-          </div>
-
-          <div class="lot-footer">
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Hourly Rate</span>
-              <strong style="font-size: 1.1rem; color: var(--primary);">₹25 / hr</strong>
-            </div>
-            <a href="slot-selection.html?lotId=lot-2&lotName=Science%20%26%20Tech%20Tower%20Zone%20B&rate=25" class="btn btn-primary btn-sm">
-              View Slots & Layout →
-            </a>
-          </div>
-        </div>
-
-        <!-- Lot 3: Sports Complex & Auditorium -->
-        <div class="lot-card" data-name="Sports Complex & Auditorium" data-location="South Campus, Near Stadium" data-avail="18">
-          <div class="lot-header">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <h2 class="lot-title">Sports Complex & Auditorium</h2>
-              <span class="badge badge-available">Open</span>
-            </div>
-            <div class="lot-location">
-              <span>📍 South Campus, Beside University Stadium</span>
-            </div>
-          </div>
-
-          <div class="lot-body">
-            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
-              Spacious open-air parking area suitable for university events, matches, and extended faculty/student visits.
-            </p>
-
-            <div class="lot-stats">
-              <div class="lot-stat-item">
-                <span>Total</span>
-                <strong>20</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Available</span>
-                <strong style="color: var(--status-available);">18</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Occupied</span>
-                <strong style="color: var(--status-occupied);">1</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Reserved</span>
-                <strong style="color: var(--status-reserved);">1</strong>
-              </div>
-            </div>
-          </div>
-
-          <div class="lot-footer">
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Hourly Rate</span>
-              <strong style="font-size: 1.1rem; color: var(--primary);">₹15 / hr</strong>
-            </div>
-            <a href="slot-selection.html?lotId=lot-3&lotName=Sports%20Complex%20%26%20Auditorium&rate=15" class="btn btn-primary btn-sm">
-              View Slots & Layout →
-            </a>
-          </div>
-        </div>
-
-        <!-- Lot 4: Central Library Basement -->
-        <div class="lot-card" data-name="Central Library Basement" data-location="Central Campus, Library Wing" data-avail="4">
-          <div class="lot-header">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <h2 class="lot-title">Central Library Basement</h2>
-              <span class="badge badge-available">Open</span>
-            </div>
-            <div class="lot-location">
-              <span>📍 Central Campus, Library Lower Ground Floor</span>
-            </div>
-          </div>
-
-          <div class="lot-body">
-            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
-              Underground weather-proof parking facility with automated ticketless camera entry and well-lit bays.
-            </p>
-
-            <div class="lot-stats">
-              <div class="lot-stat-item">
-                <span>Total</span>
-                <strong>20</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Available</span>
-                <strong style="color: var(--status-available);">4</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Occupied</span>
-                <strong style="color: var(--status-occupied);">12</strong>
-              </div>
-              <div class="lot-stat-item">
-                <span>Reserved</span>
-                <strong style="color: var(--status-reserved);">4</strong>
-              </div>
-            </div>
-          </div>
-
-          <div class="lot-footer">
-            <div>
-              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Hourly Rate</span>
-              <strong style="font-size: 1.1rem; color: var(--primary);">₹30 / hr</strong>
-            </div>
-            <a href="slot-selection.html?lotId=lot-4&lotName=Central%20Library%20Basement&rate=30" class="btn btn-primary btn-sm">
-              View Slots & Layout →
-            </a>
-          </div>
-        </div>
-
       </div>
 
     </div>
@@ -262,47 +73,139 @@
         <span class="footer-tag">Smart Parking Platform</span> — SR University Hackathon 2026
       </div>
       <div>
-        <span>Real-Time Facility Directory</span>
+        <span>MongoDB-Powered Real-Time Facility Directory</span>
       </div>
     </div>
   </footer>
 
   <script src="js/main.js"></script>
   <script>
+    let allLots = [];
+    let currentFilter = 'all';
+
+    async function loadParkingLots() {
+      const container = document.getElementById('lotsContainer');
+      try {
+        const response = await fetch('/api/parking-lots');
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          container.innerHTML = `<div class="alert alert-warning" style="grid-column: 1/-1;">${data.error || 'Failed to load parking lots.'}</div>`;
+          return;
+        }
+
+        allLots = data.lots || [];
+        renderLots();
+
+        // Process search parameter if coming from landing page search
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchParam = urlParams.get('search');
+        if (searchParam) {
+          document.getElementById('lotSearchInput').value = searchParam;
+          filterLots();
+        }
+      } catch (err) {
+        console.error('Error fetching parking lots:', err);
+        container.innerHTML = `<div class="alert alert-warning" style="grid-column: 1/-1;">Could not connect to database backend.</div>`;
+      }
+    }
+
+    function renderLots(lotsToDisplay = null) {
+      const container = document.getElementById('lotsContainer');
+      const lots = lotsToDisplay || allLots;
+
+      if (!lots || lots.length === 0) {
+        container.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-muted);">No parking facilities matched your criteria.</div>`;
+        return;
+      }
+
+      container.innerHTML = lots.map(lot => `
+        <div class="lot-card" data-name="${lot.name}" data-location="${lot.location}">
+          <div class="lot-header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <h2 class="lot-title">${lot.name}</h2>
+              <span class="badge ${lot.availableSlots > 0 ? 'badge-available' : 'badge-occupied'}">
+                ${lot.availableSlots > 0 ? 'Open' : 'Full'}
+              </span>
+            </div>
+            <div class="lot-location">
+              <span>📍 ${lot.address || lot.location}</span>
+            </div>
+          </div>
+
+          <div class="lot-body">
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+              ${lot.description || 'Campus parking facility with security monitoring.'}
+            </p>
+
+            <div class="lot-stats">
+              <div class="lot-stat-item">
+                <span>Total</span>
+                <strong>${lot.totalSlots}</strong>
+              </div>
+              <div class="lot-stat-item">
+                <span>Available</span>
+                <strong style="color: var(--status-available);">${lot.availableSlots}</strong>
+              </div>
+              <div class="lot-stat-item">
+                <span>Occupied</span>
+                <strong style="color: var(--status-occupied);">${lot.occupiedSlots}</strong>
+              </div>
+              <div class="lot-stat-item">
+                <span>Hours</span>
+                <strong style="font-size: 0.85rem;">${lot.operatingHours || '24/7'}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="lot-footer">
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Hourly Tariff</span>
+              <strong style="font-size: 1.1rem; color: var(--primary);">₹${lot.hourlyRate} / hr</strong>
+            </div>
+            <a href="slot-selection.html?lotId=${lot._id}&lotName=${encodeURIComponent(lot.name)}&rate=${lot.hourlyRate}" class="btn btn-primary btn-sm">
+              View Slots & Layout →
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
     function filterLots() {
       const query = document.getElementById('lotSearchInput').value.toLowerCase().trim();
-      const cards = document.querySelectorAll('.lot-card');
+      let filtered = allLots.filter(lot => 
+        lot.name.toLowerCase().includes(query) || 
+        lot.location.toLowerCase().includes(query) ||
+        (lot.address && lot.address.toLowerCase().includes(query))
+      );
 
-      cards.forEach(card => {
-        const name = card.getAttribute('data-name').toLowerCase();
-        const loc = card.getAttribute('data-location').toLowerCase();
-        if (name.includes(query) || loc.includes(query)) {
-          card.style.display = 'flex';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+      if (currentFilter === 'available') {
+        filtered = filtered.filter(lot => lot.availableSlots > 0);
+      }
+
+      renderLots(filtered);
     }
 
-    function filterByAvailability(type) {
-      const cards = document.querySelectorAll('.lot-card');
-      cards.forEach(card => {
-        const avail = parseInt(card.getAttribute('data-avail'), 10);
-        if (type === 'all') {
-          card.style.display = 'flex';
-        } else if (type === 'available') {
-          card.style.display = avail > 0 ? 'flex' : 'none';
-        }
-      });
-    }
+    function setAvailabilityFilter(type) {
+      currentFilter = type;
+      const btnAll = document.getElementById('btnFilterAll');
+      const btnAvail = document.getElementById('btnFilterAvail');
 
-    // Check URL parameters for search string from landing page
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchParam = urlParams.get('search');
-    if (searchParam) {
-      document.getElementById('lotSearchInput').value = searchParam;
+      if (type === 'available') {
+        btnAvail.classList.add('btn-primary');
+        btnAvail.classList.remove('btn-outline');
+        btnAll.classList.remove('btn-primary');
+        btnAll.classList.add('btn-outline');
+      } else {
+        btnAll.classList.add('btn-primary');
+        btnAll.classList.remove('btn-outline');
+        btnAvail.classList.remove('btn-primary');
+        btnAvail.classList.add('btn-outline');
+      }
       filterLots();
     }
+
+    document.addEventListener('DOMContentLoaded', loadParkingLots);
   </script>
 </body>
 </html>

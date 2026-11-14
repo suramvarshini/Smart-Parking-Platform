@@ -50,12 +50,12 @@
         </div>
       </div>
 
-      <!-- Live Statistics Cards -->
+      <!-- Live Statistics Cards (Aggregated live from MongoDB) -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-info">
             <h3>Total Slots</h3>
-            <div class="stat-number" id="dashTotal">80</div>
+            <div class="stat-number" id="dashTotal">...</div>
           </div>
           <div class="stat-icon">🅿️</div>
         </div>
@@ -63,7 +63,7 @@
         <div class="stat-card stat-available">
           <div class="stat-info">
             <h3>Available</h3>
-            <div class="stat-number" id="dashAvail">42</div>
+            <div class="stat-number" id="dashAvail">...</div>
           </div>
           <div class="stat-icon">🟢</div>
         </div>
@@ -71,31 +71,31 @@
         <div class="stat-card stat-occupied">
           <div class="stat-info">
             <h3>Occupied</h3>
-            <div class="stat-number" id="dashOcc">28</div>
+            <div class="stat-number" id="dashOcc">...</div>
           </div>
           <div class="stat-icon">🔴</div>
         </div>
 
         <div class="stat-card stat-reserved">
           <div class="stat-info">
-            <h3>Reserved</h3>
-            <div class="stat-number" id="dashRes">10</div>
+            <h3>My Active Passes</h3>
+            <div class="stat-number" id="dashMyActive">...</div>
           </div>
-          <div class="stat-icon">🟠</div>
+          <div class="stat-icon">🎟️</div>
         </div>
       </div>
 
-      <!-- My Active & Recent Bookings -->
+      <!-- My Active & Recent Bookings (MongoDB Powered) -->
       <div class="card" style="margin-bottom: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap:wrap; gap:10px;">
           <div>
             <h2 class="card-title" style="margin-bottom: 2px;">My Bookings</h2>
-            <p class="card-subtitle" style="margin-bottom: 0;">Your active and past parking reservations</p>
+            <p class="card-subtitle" style="margin-bottom: 0;">Live reservations retrieved from MongoDB</p>
           </div>
           <div>
-            <button class="btn btn-outline btn-sm" onclick="filterBookings('all')">All</button>
-            <button class="btn btn-outline btn-sm" onclick="filterBookings('confirmed')">Active</button>
-            <button class="btn btn-outline btn-sm" onclick="filterBookings('completed')">Completed</button>
+            <button class="btn btn-outline btn-sm" onclick="filterBookings('ALL')">All</button>
+            <button class="btn btn-outline btn-sm" onclick="filterBookings('CONFIRMED')">Active</button>
+            <button class="btn btn-outline btn-sm" onclick="filterBookings('CANCELLED')">Cancelled</button>
           </div>
         </div>
 
@@ -110,44 +110,13 @@
                 <th>Time Window</th>
                 <th>Duration</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="bookingsBody">
-              <tr data-status="confirmed">
-                <td><strong>#BK-9481</strong></td>
-                <td>SRU Main Academic Block</td>
-                <td><span class="badge badge-info">Slot A-04</span></td>
-                <td>Today, Nov 14</td>
-                <td>12:00 PM - 02:00 PM</td>
-                <td>2 Hours</td>
-                <td><span class="badge badge-available">Active / Confirmed</span></td>
-                <td>
-                  <button class="btn btn-outline btn-sm" onclick="viewTicket('BK-9481', 'SRU Main Academic Block', 'A-04', '12:00 PM - 02:00 PM', '₹40')">View Pass</button>
-                </td>
-              </tr>
-              <tr data-status="completed">
-                <td><strong>#BK-8930</strong></td>
-                <td>Science & Tech Tower Zone B</td>
-                <td><span class="badge badge-info">Slot B-12</span></td>
-                <td>Nov 12, 2026</td>
-                <td>09:00 AM - 11:00 AM</td>
-                <td>2 Hours</td>
-                <td><span class="badge badge-reserved">Completed</span></td>
-                <td>
-                  <span style="color:var(--text-muted); font-size:0.85rem;">Ended</span>
-                </td>
-              </tr>
-              <tr data-status="completed">
-                <td><strong>#BK-7821</strong></td>
-                <td>Auditorium & Sports Complex</td>
-                <td><span class="badge badge-info">Slot C-08</span></td>
-                <td>Nov 10, 2026</td>
-                <td>03:00 PM - 06:00 PM</td>
-                <td>3 Hours</td>
-                <td><span class="badge badge-reserved">Completed</span></td>
-                <td>
-                  <span style="color:var(--text-muted); font-size:0.85rem;">Ended</span>
+              <tr>
+                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  Loading reservations from database...
                 </td>
               </tr>
             </tbody>
@@ -158,14 +127,14 @@
       <!-- Quick Tips Banner for Students / Faculty -->
       <div class="alert alert-info">
         <div>
-          <strong>📌 Campus Parking Tip:</strong> Reserved slots are held for up to 15 minutes past your start time. Please display your digital pass on your dashboard upon arrival at the security gate.
+          <strong>📌 Real-Time Reservation Guarantee:</strong> Your parking passes are securely validated and managed in MongoDB. Cancelled bookings instantly free up parking bay availability.
         </div>
       </div>
 
     </div>
   </main>
 
-  <!-- Pass Modal Dialog (Vanilla JS) -->
+  <!-- Pass Modal Dialog -->
   <div id="ticketModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; width:90%; max-width:440px; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
@@ -194,8 +163,10 @@
 
   <script src="js/main.js"></script>
   <script>
-    // Fetch authenticated user identity
+    let myBookingsList = [];
+
     async function initUserDashboard() {
+      // 1. Fetch user identity
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
@@ -208,8 +179,152 @@
       } catch (e) {
         console.error('Session load error', e);
       }
+
+      // 2. Fetch live statistics from all lots
+      try {
+        const lotRes = await fetch('/api/parking-lots');
+        if (lotRes.ok) {
+          const lotData = await lotRes.json();
+          const lots = lotData.lots || [];
+          let total = 0, avail = 0, occ = 0;
+          lots.forEach(l => {
+            total += l.totalSlots || 0;
+            avail += l.availableSlots || 0;
+            occ += l.occupiedSlots || 0;
+          });
+          document.getElementById('dashTotal').textContent = total;
+          document.getElementById('dashAvail').textContent = avail;
+          document.getElementById('dashOcc').textContent = occ;
+        }
+      } catch (e) {
+        console.error('Stats error', e);
+      }
+
+      // 3. Fetch real bookings from MongoDB
+      await loadUserBookings();
     }
-    initUserDashboard();
+
+    async function loadUserBookings() {
+      const tbody = document.getElementById('bookingsBody');
+      try {
+        const res = await fetch('/api/bookings/my-bookings');
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">${data.error || 'Failed to load bookings.'}</td></tr>`;
+          return;
+        }
+
+        myBookingsList = data.bookings || [];
+
+        // Count active
+        const activeCount = myBookingsList.filter(b => b.bookingStatus === 'CONFIRMED').length;
+        document.getElementById('dashMyActive').textContent = activeCount;
+
+        renderBookingsTable(myBookingsList);
+      } catch (err) {
+        console.error('Bookings load error:', err);
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Could not connect to database.</td></tr>`;
+      }
+    }
+
+    function renderBookingsTable(bookings) {
+      const tbody = document.getElementById('bookingsBody');
+      if (!bookings || bookings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">You have no reservations recorded yet. <a href="parking-lots.html">Book your first slot!</a></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = bookings.map(b => {
+        const lotName = b.parkingLot ? b.parkingLot.name : 'Campus Facility';
+        const slotNo = b.parkingSlot ? b.parkingSlot.slotNumber : 'N/A';
+        const isConfirmed = b.bookingStatus === 'CONFIRMED';
+        const isCancelled = b.bookingStatus === 'CANCELLED';
+
+        let badgeClass = 'badge-available';
+        if (isCancelled) badgeClass = 'badge-occupied';
+        else if (b.bookingStatus === 'COMPLETED') badgeClass = 'badge-reserved';
+
+        return `
+          <tr data-status="${b.bookingStatus}">
+            <td><strong>#${b.bookingId}</strong></td>
+            <td>${lotName}</td>
+            <td><span class="badge badge-info">${slotNo}</span></td>
+            <td>${b.bookingDate}</td>
+            <td>${b.startTime} - ${b.endTime}</td>
+            <td>${b.duration} Hr${b.duration > 1 ? 's' : ''}</td>
+            <td><span class="badge ${badgeClass}">${b.bookingStatus}</span></td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="viewTicket('${b.bookingId}', '${lotName}', '${slotNo}', '${b.startTime} - ${b.endTime}', '₹${b.totalAmount}', '${b.bookingStatus}')">
+                  Pass
+                </button>
+                ${isConfirmed ? `
+                  <button class="btn btn-danger btn-sm" onclick="cancelUserBooking('${b._id}', '${b.bookingId}')">
+                    Cancel
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterBookings(status) {
+      if (status === 'ALL') {
+        renderBookingsTable(myBookingsList);
+      } else {
+        const filtered = myBookingsList.filter(b => b.bookingStatus === status);
+        renderBookingsTable(filtered);
+      }
+    }
+
+    async function cancelUserBooking(id, bookingId) {
+      if (!confirm(`Are you sure you want to cancel booking #${bookingId}? The slot will be released back to the facility.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/bookings/${id}/cancel`, { method: 'PUT' });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          window.showAlert(data.error || 'Failed to cancel booking.', 'warning');
+          return;
+        }
+
+        window.showAlert(`Booking #${bookingId} has been cancelled and slot released.`, 'success');
+        await loadUserBookings();
+      } catch (err) {
+        console.error('Cancel error:', err);
+        window.showAlert('Network error cancelling booking.', 'warning');
+      }
+    }
+
+    function viewTicket(id, lot, slot, time, cost, status) {
+      const modal = document.getElementById('ticketModal');
+      const content = document.getElementById('ticketModalContent');
+      content.innerHTML = `
+        <div style="text-align:center; padding:10px 0 16px;">
+          <div style="font-size:2.2rem; margin-bottom:6px;">🚗</div>
+          <div style="font-weight:800; font-size:1.2rem; color:var(--primary);">${lot}</div>
+          <div style="font-size:0.9rem; color:var(--text-muted);">Pass ID: #${id}</div>
+        </div>
+        <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:14px; margin-bottom:14px;">
+          <div class="summary-row"><span>Assigned Bay:</span> <strong>${slot}</strong></div>
+          <div class="summary-row"><span>Time Window:</span> <strong>${time}</strong></div>
+          <div class="summary-row"><span>Amount:</span> <strong>${cost}</strong></div>
+          <div class="summary-row"><span>Status:</span> <span class="badge ${status === 'CONFIRMED' ? 'badge-available' : 'badge-occupied'}">${status}</span></div>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-muted); text-align:center;">Valid at campus parking security boom barrier.</p>
+      `;
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('ticketModal').style.display = 'none';
+    }
 
     async function handleLogout() {
       try {
@@ -220,40 +335,7 @@
       window.location.href = 'login.html';
     }
 
-    function filterBookings(status) {
-      const rows = document.querySelectorAll('#bookingsBody tr');
-      rows.forEach(row => {
-        if (status === 'all' || row.getAttribute('data-status') === status) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
-      });
-    }
-
-    function viewTicket(id, lot, slot, time, cost) {
-      const modal = document.getElementById('ticketModal');
-      const content = document.getElementById('ticketModalContent');
-      content.innerHTML = `
-        <div style="text-align:center; padding:10px 0 16px;">
-          <div style="font-size:2.2rem; margin-bottom:6px;">🚗</div>
-          <div style="font-weight:800; font-size:1.2rem; color:var(--primary);">${lot}</div>
-          <div style="font-size:0.9rem; color:var(--text-muted);">Pass ID: ${id}</div>
-        </div>
-        <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:14px; margin-bottom:14px;">
-          <div class="summary-row"><span>Assigned Bay:</span> <strong>${slot}</strong></div>
-          <div class="summary-row"><span>Time Window:</span> <strong>${time}</strong></div>
-          <div class="summary-row"><span>Amount Paid:</span> <strong>${cost}</strong></div>
-          <div class="summary-row"><span>Pass Status:</span> <span class="badge badge-available">VALID</span></div>
-        </div>
-        <p style="font-size:0.8rem; color:var(--text-muted); text-align:center;">Scan or present to campus parking marshal at entry boom barrier.</p>
-      `;
-      modal.style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('ticketModal').style.display = 'none';
-    }
+    document.addEventListener('DOMContentLoaded', initUserDashboard);
   </script>
 </body>
 </html>

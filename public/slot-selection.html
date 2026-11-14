@@ -38,8 +38,8 @@
       <!-- Facility Header -->
       <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
         <div>
-          <span class="badge badge-info" style="margin-bottom: 6px;">Visual Bay Selection</span>
-          <h1 id="selectedLotTitle" style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">SRU Main Academic Block</h1>
+          <span class="badge badge-info" style="margin-bottom: 6px;">Visual Bay Selection (MongoDB)</span>
+          <h1 id="selectedLotTitle" style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Loading Facility...</h1>
           <p style="color: var(--text-muted); font-size: 0.95rem;">Click on any green available parking bay to select and proceed to booking.</p>
         </div>
         <div>
@@ -68,83 +68,15 @@
         </div>
       </div>
 
-      <!-- Lane A: Section 1 -->
+      <!-- Lane A Section -->
       <div class="parking-lane">
         <div class="lane-header">
           <span class="lane-title">Lane A — Ground Floor (Near Main Entrance)</span>
-          <span class="badge badge-available">7 Available</span>
+          <span class="badge badge-available" id="laneACountBadge">Checking Bays...</span>
         </div>
 
-        <div class="slot-grid">
-          <!-- Slot A-01: Available -->
-          <div class="slot-bay available" data-slot="A-01" data-status="available">
-            <div class="slot-number">A-01</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot A-02: Occupied -->
-          <div class="slot-bay occupied" data-slot="A-02" data-status="occupied">
-            <div class="slot-number">A-02</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Occupied</div>
-          </div>
-
-          <!-- Slot A-03: Reserved -->
-          <div class="slot-bay reserved" data-slot="A-03" data-status="reserved">
-            <div class="slot-number">A-03</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Reserved</div>
-          </div>
-
-          <!-- Slot A-04: Available -->
-          <div class="slot-bay available" data-slot="A-04" data-status="available">
-            <div class="slot-number">A-04</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot A-05: Available -->
-          <div class="slot-bay available" data-slot="A-05" data-status="available">
-            <div class="slot-number">A-05</div>
-            <div class="slot-type">EV Charging</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot A-06: Occupied -->
-          <div class="slot-bay occupied" data-slot="A-06" data-status="occupied">
-            <div class="slot-number">A-06</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Occupied</div>
-          </div>
-
-          <!-- Slot A-07: Available -->
-          <div class="slot-bay available" data-slot="A-07" data-status="available">
-            <div class="slot-number">A-07</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot A-08: Available -->
-          <div class="slot-bay available" data-slot="A-08" data-status="available">
-            <div class="slot-number">A-08</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot A-09: Occupied -->
-          <div class="slot-bay occupied" data-slot="A-09" data-status="occupied">
-            <div class="slot-number">A-09</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Occupied</div>
-          </div>
-
-          <!-- Slot A-10: Available -->
-          <div class="slot-bay available" data-slot="A-10" data-status="available">
-            <div class="slot-number">A-10</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
+        <div class="slot-grid" id="laneAGrid">
+          <div style="padding: 20px; color: var(--text-muted);">Loading bays from database...</div>
         </div>
       </div>
 
@@ -153,94 +85,26 @@
         ▲ IN-DRIVE AISLE / ENTRY & EXIT WAY ▼
       </div>
 
-      <!-- Lane B: Section 2 -->
+      <!-- Lane B Section -->
       <div class="parking-lane">
         <div class="lane-header">
           <span class="lane-title">Lane B — Ground Floor (Beside Bicycle & EV Bay)</span>
-          <span class="badge badge-available">5 Available</span>
+          <span class="badge badge-available" id="laneBCountBadge">Checking Bays...</span>
         </div>
 
-        <div class="slot-grid">
-          <!-- Slot B-01: Available -->
-          <div class="slot-bay available" data-slot="B-01" data-status="available">
-            <div class="slot-number">B-01</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot B-02: Occupied -->
-          <div class="slot-bay occupied" data-slot="B-02" data-status="occupied">
-            <div class="slot-number">B-02</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Occupied</div>
-          </div>
-
-          <!-- Slot B-03: Available -->
-          <div class="slot-bay available" data-slot="B-03" data-status="available">
-            <div class="slot-number">B-03</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot B-04: Occupied -->
-          <div class="slot-bay occupied" data-slot="B-04" data-status="occupied">
-            <div class="slot-number">B-04</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Occupied</div>
-          </div>
-
-          <!-- Slot B-05: Reserved -->
-          <div class="slot-bay reserved" data-slot="B-05" data-status="reserved">
-            <div class="slot-number">B-05</div>
-            <div class="slot-type">EV Charging</div>
-            <div class="slot-status-indicator">Reserved</div>
-          </div>
-
-          <!-- Slot B-06: Available -->
-          <div class="slot-bay available" data-slot="B-06" data-status="available">
-            <div class="slot-number">B-06</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot B-07: Occupied -->
-          <div class="slot-bay occupied" data-slot="B-07" data-status="occupied">
-            <div class="slot-number">B-07</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Occupied</div>
-          </div>
-
-          <!-- Slot B-08: Available -->
-          <div class="slot-bay available" data-slot="B-08" data-status="available">
-            <div class="slot-number">B-08</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot B-09: Available -->
-          <div class="slot-bay available" data-slot="B-09" data-status="available">
-            <div class="slot-number">B-09</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Available</div>
-          </div>
-
-          <!-- Slot B-10: Occupied -->
-          <div class="slot-bay occupied" data-slot="B-10" data-status="occupied">
-            <div class="slot-number">B-10</div>
-            <div class="slot-type">Standard</div>
-            <div class="slot-status-indicator">Occupied</div>
-          </div>
+        <div class="slot-grid" id="laneBGrid">
+          <div style="padding: 20px; color: var(--text-muted);">Loading bays from database...</div>
         </div>
       </div>
 
-      <!-- Bottom Selection Floating / Action Bar -->
+      <!-- Bottom Selection Action Bar -->
       <div class="card" style="position: sticky; bottom: 20px; z-index: 90; box-shadow: var(--shadow-lg); border-color: var(--secondary);">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
           <div>
             <div id="selectedBayDisplay" style="font-size: 1.05rem; color: var(--primary);">
               <em>Click any green bay above to select</em>
             </div>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time slot reservation guarantee</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time MongoDB slot reservation</span>
           </div>
 
           <div>
@@ -261,7 +125,7 @@
         <span class="footer-tag">Smart Parking Platform</span> — SR University Hackathon 2026
       </div>
       <div>
-        <span>Interactive Visual Parking Grid</span>
+        <span>Real-Time Mongoose Slot Layout</span>
       </div>
     </div>
   </footer>

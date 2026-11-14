@@ -68,19 +68,19 @@
             <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 0;">Campus Facility Administration</h1>
             <span class="badge badge-occupied">ROLE: ADMIN</span>
           </div>
-          <p style="color: var(--text-muted); font-size: 0.95rem;">Manage campus parking infrastructure, adjust slot availability and monitor reservations.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Manage campus parking infrastructure, adjust slot availability and monitor reservations from MongoDB.</p>
         </div>
         <div>
           <button id="openAddLotModal" class="btn btn-primary">+ Add New Parking Lot</button>
         </div>
       </div>
 
-      <!-- Overview Stats -->
+      <!-- Overview Stats (MongoDB Aggregated) -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-info">
             <h3>Total Facilities</h3>
-            <div class="stat-number">4 Lots</div>
+            <div class="stat-number" id="statTotalLots">...</div>
           </div>
           <div class="stat-icon">🏢</div>
         </div>
@@ -88,7 +88,7 @@
         <div class="stat-card stat-available">
           <div class="stat-info">
             <h3>Active Bays</h3>
-            <div class="stat-number">80 Total</div>
+            <div class="stat-number" id="statTotalSlots">...</div>
           </div>
           <div class="stat-icon">🅿️</div>
         </div>
@@ -96,15 +96,15 @@
         <div class="stat-card stat-occupied">
           <div class="stat-info">
             <h3>Live Occupancy</h3>
-            <div class="stat-number">47.5%</div>
+            <div class="stat-number" id="statOccupancy">...</div>
           </div>
           <div class="stat-icon">📊</div>
         </div>
 
         <div class="stat-card stat-reserved">
           <div class="stat-info">
-            <h3>Today's Bookings</h3>
-            <div class="stat-number">38 Pass</div>
+            <h3>Active Bookings</h3>
+            <div class="stat-number" id="statBookings">...</div>
           </div>
           <div class="stat-icon">🎟️</div>
         </div>
@@ -121,8 +121,8 @@
       <section id="lotsSection" class="admin-section">
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2 class="card-title" style="margin-bottom:0;">Registered Parking Lots</h2>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">4 Active Facilities</span>
+            <h2 class="card-title" style="margin-bottom:0;">Registered Parking Facilities</h2>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Synchronized with MongoDB</span>
           </div>
 
           <div class="table-responsive">
@@ -130,54 +130,15 @@
               <thead>
                 <tr>
                   <th>Facility Name</th>
-                  <th>Location / Gate</th>
-                  <th>Capacity</th>
+                  <th>Location / Landmark</th>
+                  <th>Bays & Availability</th>
                   <th>Hourly Tariff</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="adminLotsTableBody">
-                <tr>
-                  <td><strong>SRU Main Academic Block</strong></td>
-                  <td>📍 North Campus, Gate 1</td>
-                  <td>20 Bays</td>
-                  <td>₹20/hr</td>
-                  <td><span class="badge badge-available">Operational</span></td>
-                  <td>
-                    <a href="slot-selection.html?lotId=lot-1&lotName=SRU%20Main%20Academic%20Block" class="btn btn-outline btn-sm">Inspect Bays</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Science & Tech Tower (Zone B)</strong></td>
-                  <td>📍 East Campus, Near CS Labs</td>
-                  <td>20 Bays</td>
-                  <td>₹25/hr</td>
-                  <td><span class="badge badge-available">Operational</span></td>
-                  <td>
-                    <a href="slot-selection.html?lotId=lot-2&lotName=Science%20%26%20Tech%20Tower%20Zone%20B" class="btn btn-outline btn-sm">Inspect Bays</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Sports Complex & Auditorium</strong></td>
-                  <td>📍 South Campus, Beside Stadium</td>
-                  <td>20 Bays</td>
-                  <td>₹15/hr</td>
-                  <td><span class="badge badge-available">Operational</span></td>
-                  <td>
-                    <a href="slot-selection.html?lotId=lot-3&lotName=Sports%20Complex%20%26%20Auditorium" class="btn btn-outline btn-sm">Inspect Bays</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Central Library Basement</strong></td>
-                  <td>📍 Central Campus, Lower Level</td>
-                  <td>20 Bays</td>
-                  <td>₹30/hr</td>
-                  <td><span class="badge badge-available">Operational</span></td>
-                  <td>
-                    <a href="slot-selection.html?lotId=lot-4&lotName=Central%20Library%20Basement" class="btn btn-outline btn-sm">Inspect Bays</a>
-                  </td>
-                </tr>
+                <tr><td colspan="6" style="text-align:center; padding:20px;">Loading facilities...</td></tr>
               </tbody>
             </table>
           </div>
@@ -190,14 +151,11 @@
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap:wrap; gap:12px;">
             <div>
               <h2 class="card-title" style="margin-bottom:2px;">Individual Slot Bay Control</h2>
-              <p class="card-subtitle" style="margin-bottom:0;">Filter slots and manually override status (e.g. for maintenance or emergency hold)</p>
+              <p class="card-subtitle" style="margin-bottom:0;">Filter slots and manually override status in database (e.g. maintenance or hold)</p>
             </div>
             <div>
-              <select class="form-control" style="width: auto; display: inline-block;">
-                <option>SRU Main Academic Block (Lane A & B)</option>
-                <option>Science & Tech Tower (Zone B)</option>
-                <option>Sports Complex & Auditorium</option>
-                <option>Central Library Basement</option>
+              <select id="slotLotSelector" class="form-control" style="width: auto; display: inline-block;" onchange="loadAdminSlots()">
+                <option value="">Select Facility...</option>
               </select>
             </div>
           </div>
@@ -213,52 +171,8 @@
                   <th>Manual Override</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><strong>Bay A-01</strong></td>
-                  <td>Lane A (North Gate)</td>
-                  <td>Standard 4-Wheeler</td>
-                  <td><span class="badge badge-available slot-badge">Available</span></td>
-                  <td>
-                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Occupied</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Bay A-02</strong></td>
-                  <td>Lane A (North Gate)</td>
-                  <td>Standard 4-Wheeler</td>
-                  <td><span class="badge badge-occupied slot-badge">Occupied</span></td>
-                  <td>
-                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Available</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Bay A-03</strong></td>
-                  <td>Lane A (North Gate)</td>
-                  <td>Standard 4-Wheeler</td>
-                  <td><span class="badge badge-reserved slot-badge">Reserved</span></td>
-                  <td>
-                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Available</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Bay A-05</strong></td>
-                  <td>Lane A (North Gate)</td>
-                  <td>EV Fast Charge Bay</td>
-                  <td><span class="badge badge-available slot-badge">Available</span></td>
-                  <td>
-                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Occupied</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Bay B-01</strong></td>
-                  <td>Lane B (South Wing)</td>
-                  <td>Standard 4-Wheeler</td>
-                  <td><span class="badge badge-available slot-badge">Available</span></td>
-                  <td>
-                    <button class="btn btn-outline btn-sm" onclick="toggleSlotStatus(this)">Mark Occupied</button>
-                  </td>
-                </tr>
+              <tbody id="adminSlotsTableBody">
+                <tr><td colspan="5" style="text-align:center; padding:20px;">Select a facility above to view bays.</td></tr>
               </tbody>
             </table>
           </div>
@@ -271,10 +185,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div>
               <h2 class="card-title" style="margin-bottom:2px;">All Platform Reservations</h2>
-              <p class="card-subtitle" style="margin-bottom:0;">Live log of user bookings and bay occupancy</p>
-            </div>
-            <div>
-              <input type="text" class="form-control" placeholder="Search by Pass # or Vehicle..." style="width: 240px; font-size: 0.85rem;">
+              <p class="card-subtitle" style="margin-bottom:0;">Live log of user bookings and bay occupancy from MongoDB</p>
             </div>
           </div>
 
@@ -286,61 +197,14 @@
                   <th>Driver Name</th>
                   <th>Vehicle No</th>
                   <th>Facility & Slot</th>
-                  <th>Scheduled Time</th>
+                  <th>Schedule</th>
                   <th>Fee</th>
                   <th>Status</th>
                   <th>Marshal Action</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><strong>#BK-9481</strong></td>
-                  <td>Rahul Sharma</td>
-                  <td>TS 03 AB 1234</td>
-                  <td>Main Block (Bay A-04)</td>
-                  <td>Today, 12:00 - 14:00</td>
-                  <td>₹40</td>
-                  <td><span class="badge badge-available booking-badge">Active</span></td>
-                  <td>
-                    <button class="btn btn-danger btn-sm" onclick="releaseBooking(this, '9481')">Release Slot</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>#BK-9475</strong></td>
-                  <td>Priya Nair</td>
-                  <td>TS 09 XY 5678</td>
-                  <td>Science Tower (Bay B-05)</td>
-                  <td>Today, 11:30 - 13:30</td>
-                  <td>₹50</td>
-                  <td><span class="badge badge-reserved booking-badge">Reserved</span></td>
-                  <td>
-                    <button class="btn btn-danger btn-sm" onclick="releaseBooking(this, '9475')">Release Slot</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>#BK-9310</strong></td>
-                  <td>Dr. K. Srinivas</td>
-                  <td>TS 01 CD 9012</td>
-                  <td>Central Library (Bay C-02)</td>
-                  <td>Today, 10:00 - 12:00</td>
-                  <td>₹60</td>
-                  <td><span class="badge badge-info booking-badge">Checked-In</span></td>
-                  <td>
-                    <button class="btn btn-danger btn-sm" onclick="releaseBooking(this, '9310')">Release Slot</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>#BK-9204</strong></td>
-                  <td>Anil Kumar</td>
-                  <td>AP 29 ZZ 3421</td>
-                  <td>Sports Complex (Bay D-01)</td>
-                  <td>Yesterday, 14:00 - 17:00</td>
-                  <td>₹45</td>
-                  <td><span class="badge badge-reserved booking-badge">Completed</span></td>
-                  <td>
-                    <span style="color:var(--text-muted); font-size:0.85rem;">Archived</span>
-                  </td>
-                </tr>
+              <tbody id="adminBookingsTableBody">
+                <tr><td colspan="8" style="text-align:center; padding:20px;">Loading bookings...</td></tr>
               </tbody>
             </table>
           </div>
@@ -361,18 +225,23 @@
       <form id="addLotForm">
         <div class="form-group">
           <label class="form-label" for="newLotName">Parking Lot Name</label>
-          <input type="text" id="newLotName" class="form-control" placeholder="e.g. Mechanical Block Lot D" required>
+          <input type="text" id="newLotName" class="form-control" placeholder="e.g. Mechanical Engineering Zone D" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="newLotLoc">Location / Landmark</label>
+          <label class="form-label" for="newLotLoc">Location / Campus Zone</label>
           <input type="text" id="newLotLoc" class="form-control" placeholder="e.g. West Campus, Gate 3" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newLotAddress">Full Address / Landmark</label>
+          <input type="text" id="newLotAddress" class="form-control" placeholder="e.g. Beside Workshop Block, North Entrance" required>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="newLotCap">Total Slot Capacity</label>
-            <input type="number" id="newLotCap" class="form-control" placeholder="25" min="1" max="200" required>
+            <input type="number" id="newLotCap" class="form-control" placeholder="20" min="2" max="100" required>
           </div>
 
           <div class="form-group">
@@ -383,7 +252,7 @@
 
         <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
           <button type="button" class="btn btn-outline" onclick="document.getElementById('addLotModal').style.display='none'">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Parking Facility</button>
+          <button type="submit" class="btn btn-primary">Save to MongoDB</button>
         </div>
       </form>
     </div>
@@ -404,7 +273,7 @@
   <script src="js/main.js"></script>
   <script src="js/admin.js"></script>
   <script>
-    async function initAdminDashboard() {
+    async function initAdminHeader() {
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
@@ -417,7 +286,7 @@
         console.error('Admin session error', e);
       }
     }
-    initAdminDashboard();
+    initAdminHeader();
 
     async function handleLogout() {
       try {

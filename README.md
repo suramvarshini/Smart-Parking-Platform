@@ -1,6 +1,7 @@
 # Smart Parking Platform (SPP)
 ## SR University Web Technologies & Mobile Programming Hackathon 2026
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsuramvarshini%2FSmart-Parking-Platform&env=MONGODB_URI,JWT_SECRET)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/suramvarshini/Smart-Parking-Platform)
 
 ![Smart Parking Platform](docs/screenshots/landing_page.png)

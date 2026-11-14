@@ -10,8 +10,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+
+const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public'))
+  ? path.join(__dirname, 'public')
+  : path.join(process.cwd(), 'public');
 
 // Mongoose Models
 const User = require('./models/User');
@@ -148,7 +153,7 @@ function requireAdmin(req, res, next) {
 
   if (req.user.role !== 'ADMIN') {
     if (req.accepts('html')) {
-      return res.status(403).sendFile(path.join(__dirname, 'public', 'access-denied.html'));
+      return res.status(403).sendFile(path.join(PUBLIC_DIR, 'access-denied.html'));
     }
     return res.status(403).json({ success: false, error: 'Access Denied: Administrator role required.' });
   }
@@ -876,21 +881,21 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
 // ==========================================================================
 
 app.get(['/admin.html', '/admin'], requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
 });
 
 app.get(['/dashboard.html', '/dashboard'], requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'dashboard.html'));
 });
 
 app.get(['/booking.html', '/booking'], requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'booking.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'booking.html'));
 });
 
 // ==========================================================================
 // 6. PUBLIC STATIC FILE SERVING
 // ==========================================================================
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(PUBLIC_DIR));
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -904,23 +909,43 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
 // ==========================================================================
-// 7. START SERVER & MONGODB CONNECTION
+// 7. MONGODB CONNECTION & SERVER EXPORT (Supports Vercel Serverless & Node)
 // ==========================================================================
-mongoose.connect(MONGODB_URI)
-  .then(async () => {
+let isDbConnecting = false;
+async function connectDB() {
+  if (mongoose.connection.readyState === 1) return;
+  if (isDbConnecting) return;
+  try {
+    isDbConnecting = true;
+    await mongoose.connect(MONGODB_URI);
     console.log(`✅ Successfully connected to MongoDB database: ${mongoose.connection.name}`);
     await seedDatabase();
+  } catch (err) {
+    console.error('❌ MongoDB database connection error:', err.message);
+  } finally {
+    isDbConnecting = false;
+  }
+}
+
+// Middleware to ensure DB connection before handling requests on Vercel Serverless
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    await connectDB();
+  }
+  next();
+});
+
+// Start local server when not running inside Vercel serverless environment
+if (require.main === module || !process.env.VERCEL) {
+  connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`🚀 Smart Parking Platform running at http://localhost:${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB database connection error:', err.message);
-    app.listen(PORT, () => {
-      console.log(`🚀 Smart Parking Platform running (offline DB mode) at http://localhost:${PORT}`);
-    });
   });
+}
+
+module.exports = app;

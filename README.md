@@ -1,6 +1,8 @@
 # Smart Parking Platform (SPP)
 ## SR University Web Technologies & Mobile Programming Hackathon 2026
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/suramvarshini/Smart-Parking-Platform)
+
 ![Smart Parking Platform](docs/screenshots/landing_page.png)
 
 A full-stack, enterprise-grade web application developed for the **SR University Hackathon 2026**. The platform delivers real-time parking space discovery, 2D visual bay reservation, mathematical time-overlap conflict prevention (zero double-booking), and strict Role-Based Access Control (RBAC).

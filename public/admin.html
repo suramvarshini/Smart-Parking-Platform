@@ -122,7 +122,7 @@
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h2 class="card-title" style="margin-bottom:0;">Registered Parking Facilities</h2>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">Synchronized with MongoDB</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Real-time MongoDB Records</span>
           </div>
 
           <div class="table-responsive">
@@ -147,7 +147,7 @@
 
       <!-- SECTION 2: SLOT MANAGEMENT -->
       <section id="slotsSection" class="admin-section" style="display: none;">
-        <div class="card">
+        <div class="card" style="margin-bottom: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap:wrap; gap:12px;">
             <div>
               <h2 class="card-title" style="margin-bottom:2px;">Individual Slot Bay Control</h2>
@@ -158,6 +158,19 @@
                 <option value="">Select Facility...</option>
               </select>
             </div>
+          </div>
+
+          <!-- Add Slot Inline Sub-Form -->
+          <div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+            <form id="addSlotForm" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <span style="font-weight: 600; font-size: 0.9rem; color: var(--primary);">+ Add Bay to Facility:</span>
+              <input type="text" id="newSlotNumber" class="form-control" placeholder="Bay No (e.g. C-01)" style="width: 160px;" required>
+              <select id="newSlotType" class="form-control" style="width: 140px;">
+                <option value="Car">Car (4-Wheeler)</option>
+                <option value="Bike">Bike (2-Wheeler)</option>
+              </select>
+              <button type="submit" class="btn btn-primary btn-sm">Add Slot Bay</button>
+            </form>
           </div>
 
           <div class="table-responsive">
@@ -182,10 +195,19 @@
       <!-- SECTION 3: BOOKINGS OVERVIEW -->
       <section id="bookingsSection" class="admin-section" style="display: none;">
         <div class="card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
             <div>
               <h2 class="card-title" style="margin-bottom:2px;">All Platform Reservations</h2>
               <p class="card-subtitle" style="margin-bottom:0;">Live log of user bookings and bay occupancy from MongoDB</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <input type="text" id="adminBookingSearch" class="form-control" placeholder="Search by Pass # or vehicle..." style="width: 220px; font-size: 0.85rem;">
+              <select id="adminBookingStatusFilter" class="form-control" style="width: 150px; font-size: 0.85rem;">
+                <option value="ALL">All Statuses</option>
+                <option value="CONFIRMED">Active / Confirmed</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
             </div>
           </div>
 
@@ -258,6 +280,52 @@
     </div>
   </div>
 
+  <!-- Edit Parking Lot Modal -->
+  <div id="editLotModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; width:90%; max-width:500px; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
+        <h3 style="color:var(--primary); margin:0;">Edit Parking Facility</h3>
+        <button id="closeEditLotModal" style="border:none; background:none; font-size:1.4rem; cursor:pointer;">✕</button>
+      </div>
+
+      <form id="editLotForm">
+        <input type="hidden" id="editLotId">
+
+        <div class="form-group">
+          <label class="form-label" for="editLotName">Parking Lot Name</label>
+          <input type="text" id="editLotName" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editLotLoc">Location / Zone</label>
+          <input type="text" id="editLotLoc" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editLotAddress">Address / Landmark</label>
+          <input type="text" id="editLotAddress" class="form-control" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="editLotRate">Hourly Tariff (₹)</label>
+            <input type="number" id="editLotRate" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editLotHours">Operating Hours</label>
+            <input type="text" id="editLotHours" class="form-control" placeholder="e.g. 24/7 or 06:00 AM - 10:00 PM">
+          </div>
+        </div>
+
+        <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('editLotModal').style.display='none'">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Facility</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="footer">
     <div class="container footer-content">
@@ -275,7 +343,7 @@
   <script>
     async function initAdminHeader() {
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await window.authFetch('/api/auth/me');
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
@@ -287,15 +355,6 @@
       }
     }
     initAdminHeader();
-
-    async function handleLogout() {
-      try {
-        await fetch('/api/auth/logout', { method: 'POST' });
-      } catch (e) {
-        console.error(e);
-      }
-      window.location.href = 'login.html';
-    }
   </script>
 </body>
 </html>

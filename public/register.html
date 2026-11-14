@@ -141,6 +141,9 @@
           return;
         }
 
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
         window.showAlert(`Account registered successfully for ${name}! Redirecting to login...`, 'success');
         setTimeout(() => {
           window.location.href = 'login.html?registered=true';

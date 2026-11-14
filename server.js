@@ -2,7 +2,7 @@
  * Smart Parking Platform - Main Server & API Engine
  * SR University Web Technologies & Mobile Programming Hackathon 2026
  *
- * Session 2: Full MongoDB + Mongoose Integration, RBAC Security & Conflict Prevention.
+ * Session 3: Full Backend & Frontend Integration, JWT Auth, RBAC, Conflict Prevention.
  */
 
 require('dotenv').config();
@@ -11,6 +11,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 // Mongoose Models
 const User = require('./models/User');
@@ -23,8 +24,10 @@ const seedDatabase = require('./scripts/seed');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart_parking_db';
+const JWT_SECRET = process.env.JWT_SECRET || 'sru_smart_parking_jwt_secret_key_2026';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
-// ---------------- Helpers ---------------- //
+// ---------------- Helper Utilities ---------------- //
 
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password + 'sru_spp_hackathon_salt_2026').digest('hex');
@@ -32,10 +35,10 @@ function hashPassword(password) {
 
 function calculateEndTime(startTime, durationHours) {
   const [h, m] = startTime.split(':').map(Number);
-  const endH = h + Number(durationHours);
-  const formattedH = String(endH % 24).padStart(2, '0');
-  const formattedM = String(m).padStart(2, '0');
-  return `${formattedH}:${formattedM}`;
+  const totalMinutes = (h * 60 + m) + (Number(durationHours) * 60);
+  const endH = Math.floor(totalMinutes / 60) % 24;
+  const endM = totalMinutes % 60;
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 }
 
 async function syncLotAvailability(lotId) {
@@ -52,13 +55,13 @@ async function syncLotAvailability(lotId) {
   return { total, available };
 }
 
-// ---------------- Middleware ---------------- //
+// ---------------- Middlewares ---------------- //
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Cookie Parser Middleware
+// Lightweight Cookie Parser Middleware
 app.use((req, res, next) => {
   req.cookies = {};
   const cookieHeader = req.headers.cookie;
@@ -73,11 +76,38 @@ app.use((req, res, next) => {
   next();
 });
 
-// Session Loader Middleware
+// JWT & Session Authentication Middleware
 app.use(async (req, res, next) => {
   req.user = null;
-  const sessionId = req.cookies.session_id;
 
+  // 1. Check Authorization Header (Bearer <token>)
+  let token = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.cookies.token) {
+    token = req.cookies.token;
+  }
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.user = {
+        id: decoded.id,
+        name: decoded.name,
+        email: decoded.email,
+        role: decoded.role,
+        phone: decoded.phone,
+        vehicleNo: decoded.vehicleNo
+      };
+      return next();
+    } catch (err) {
+      // Token expired or invalid, fallback to session DB check if present
+    }
+  }
+
+  // 2. Fallback to MongoDB session_id cookie if JWT not present/expired
+  const sessionId = req.cookies.session_id;
   if (sessionId) {
     try {
       const activeSession = await Session.findOne({ sessionId });
@@ -93,16 +123,17 @@ app.use(async (req, res, next) => {
       console.error('Session lookup error:', err.message);
     }
   }
+
   next();
 });
 
-// Authorization Middlewares
+// RBAC Route Protection Guards
 function requireAuth(req, res, next) {
   if (!req.user) {
     if (req.accepts('html')) {
       return res.redirect('/login.html?error=unauthenticated');
     }
-    return res.status(401).json({ success: false, error: 'Unauthorized: Please log in to proceed.' });
+    return res.status(401).json({ success: false, error: 'Unauthorized: Valid authentication token required.' });
   }
   next();
 }
@@ -126,16 +157,20 @@ function requireAdmin(req, res, next) {
 }
 
 // ==========================================================================
-// 1. AUTHENTICATION APIS
+// 1. AUTHENTICATION REST APIS (JWT & RBAC)
 // ==========================================================================
 
-// Register
+// Register New User (Strictly forces role: USER)
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, phone, password, vehicleNo } = req.body;
 
     if (!name || !email || !phone || !password) {
       return res.status(400).json({ success: false, error: 'Name, email, phone, and password are required.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -146,7 +181,7 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(409).json({ success: false, error: 'An account with this email already exists.' });
     }
 
-    // Role is strictly forced to 'USER' - no privilege self-assignment
+    // Role is strictly forced to 'USER' - Prevent privilege escalation
     const newUser = new User({
       name: name.trim(),
       email: normalizedEmail,
@@ -158,10 +193,24 @@ app.post('/api/auth/register', async (req, res) => {
 
     await newUser.save();
 
+    // Issue JWT Token
+    const token = jwt.sign(
+      { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role, phone: newUser.phone, vehicleNo: newUser.vehicleNo },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    // Set HttpOnly cookie
+    res.setHeader('Set-Cookie', [
+      `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`,
+      `session_id=${crypto.randomUUID()}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`
+    ]);
+
     res.status(201).json({
       success: true,
       message: 'Account registered successfully.',
-      user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role }
+      token,
+      user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role, phone: newUser.phone, vehicleNo: newUser.vehicleNo }
     });
   } catch (err) {
     console.error('Registration error:', err);
@@ -185,9 +234,16 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid email or password.' });
     }
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, vehicleNo: user.vehicleNo },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
     const sessionId = crypto.randomUUID();
 
-    // Store session in MongoDB
+    // Store session in MongoDB for state tracking
     await Session.create({
       sessionId,
       userId: user._id,
@@ -196,22 +252,28 @@ app.post('/api/auth/login', async (req, res) => {
       email: user.email
     });
 
-    res.setHeader('Set-Cookie', `session_id=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`);
+    // Set secure HttpOnly cookies
+    res.setHeader('Set-Cookie', [
+      `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`,
+      `session_id=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`
+    ]);
 
     res.json({
       success: true,
       message: 'Login successful.',
+      token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        phone: user.phone,
         vehicleNo: user.vehicleNo
       }
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ success: false, error: 'Server error during login.' });
+    res.status(500).json({ success: false, error: 'Server error during authentication.' });
   }
 });
 
@@ -222,7 +284,11 @@ app.post('/api/auth/logout', async (req, res) => {
     if (sessionId) {
       await Session.deleteOne({ sessionId });
     }
-    res.setHeader('Set-Cookie', 'session_id=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
+    // Expire cookies
+    res.setHeader('Set-Cookie', [
+      'token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+      'session_id=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    ]);
     res.json({ success: true, message: 'Logged out successfully.' });
   } catch (err) {
     console.error('Logout error:', err);
@@ -239,15 +305,25 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 // ==========================================================================
-// 2. PARKING LOTS & SLOTS APIS
+// 2. PARKING FACILITY & SLOT MANAGEMENT APIS
 // ==========================================================================
 
-// Get all parking lots
+// Get All Parking Lots (Supports search & filter)
 app.get('/api/parking-lots', async (req, res) => {
   try {
-    const lots = await ParkingLot.find().sort({ createdAt: -1 });
+    const { search, type } = req.query;
+    let query = {};
 
-    // Sync available counts live
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { address: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const lots = await ParkingLot.find(query).sort({ createdAt: -1 });
+
     const enrichedLots = await Promise.all(lots.map(async (lot) => {
       const { total, available } = await syncLotAvailability(lot._id);
       const occupied = total - available;
@@ -268,11 +344,11 @@ app.get('/api/parking-lots', async (req, res) => {
     res.json({ success: true, count: enrichedLots.length, lots: enrichedLots });
   } catch (err) {
     console.error('Get lots error:', err);
-    res.status(500).json({ success: false, error: 'Error fetching parking lots.' });
+    res.status(500).json({ success: false, error: 'Error fetching parking facilities.' });
   }
 });
 
-// Get single parking lot details
+// Get Single Parking Lot
 app.get('/api/parking-lots/:id', async (req, res) => {
   try {
     const lot = await ParkingLot.findById(req.params.id);
@@ -297,24 +373,29 @@ app.get('/api/parking-lots/:id', async (req, res) => {
     });
   } catch (err) {
     console.error('Get lot details error:', err);
-    res.status(500).json({ success: false, error: 'Error fetching parking lot details.' });
+    res.status(500).json({ success: false, error: 'Error retrieving facility details.' });
   }
 });
 
-// Get slots for a parking lot (with dynamic time-window conflict check)
+// Get Slots for a Parking Lot (Time Window & Vehicle Type Aware)
 app.get('/api/parking-lots/:id/slots', async (req, res) => {
   try {
     const lotId = req.params.id;
     const lot = await ParkingLot.findById(lotId);
     if (!lot) {
-      return res.status(404).json({ success: false, error: 'Parking lot not found.' });
+      return res.status(404).json({ success: false, error: 'Parking facility not found.' });
     }
 
-    const slots = await ParkingSlot.find({ parkingLot: lotId }).sort({ slotNumber: 1 });
+    let filter = { parkingLot: lotId };
+    const { date, startTime, duration, vehicleType } = req.query;
 
-    const { date, startTime, duration } = req.query;
+    if (vehicleType && vehicleType !== 'All') {
+      filter.slotType = vehicleType;
+    }
 
-    // If query contains specific date/time, calculate dynamic status considering active bookings
+    const slots = await ParkingSlot.find(filter).sort({ slotNumber: 1 });
+
+    // If a specific time window is requested, calculate live dynamic slot states
     if (date && startTime && duration) {
       const endTime = calculateEndTime(startTime, Number(duration));
 
@@ -325,20 +406,20 @@ app.get('/api/parking-lots/:id/slots', async (req, res) => {
       });
 
       const dynamicSlots = slots.map(slot => {
-        // Base slot status from admin
+        // If slot is marked OCCUPIED by admin for maintenance
         if (slot.status === 'OCCUPIED') {
           return { ...slot.toObject(), dynamicStatus: 'OCCUPIED' };
         }
 
-        // Check if there is an overlapping booking for this specific slot
-        const conflict = activeBookings.find(b => {
+        // Check if there is an overlapping active booking
+        const hasConflict = activeBookings.some(b => {
           return b.parkingSlot.toString() === slot._id.toString() &&
                  (startTime < b.endTime && endTime > b.startTime);
         });
 
         return {
           ...slot.toObject(),
-          dynamicStatus: conflict ? 'RESERVED' : slot.status
+          dynamicStatus: hasConflict ? 'RESERVED' : slot.status
         };
       });
 
@@ -353,17 +434,17 @@ app.get('/api/parking-lots/:id/slots', async (req, res) => {
 });
 
 // ==========================================================================
-// 3. BOOKING APIS & CONFLICT PREVENTION
+// 3. BOOKING APIS & CONFLICT PREVENTION ENGINE
 // ==========================================================================
 
-// Create Booking
+// Create a New Parking Reservation
 app.post('/api/bookings', requireAuth, async (req, res) => {
   try {
     const { parkingLotId, parkingSlotId, vehicleNumber, vehicleType, bookingDate, startTime, duration } = req.body;
 
-    // 1. Validate required fields
+    // 1. Validate inputs
     if (!parkingLotId || !parkingSlotId || !vehicleNumber || !bookingDate || !startTime || !duration) {
-      return res.status(400).json({ success: false, error: 'All booking fields are required.' });
+      return res.status(400).json({ success: false, error: 'All reservation fields are required.' });
     }
 
     const durationNum = Number(duration);
@@ -371,20 +452,19 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Duration must be at least 1 hour.' });
     }
 
-    // 2. Validate booking time format (HH:MM)
     if (!/^\d{2}:\d{2}$/.test(startTime)) {
       return res.status(400).json({ success: false, error: 'Start time must be in HH:MM format.' });
     }
 
     const endTime = calculateEndTime(startTime, durationNum);
 
-    // 3. Prevent past date / time bookings
+    // 2. Validate booking date/time is not in the past
     const todayStr = new Date().toISOString().split('T')[0];
     if (bookingDate < todayStr) {
       return res.status(400).json({ success: false, error: 'Cannot book a parking slot for a past date.' });
     }
 
-    // 4. Verify Parking Lot and Slot exist
+    // 3. Verify facility and slot exist in MongoDB
     const lot = await ParkingLot.findById(parkingLotId);
     if (!lot) {
       return res.status(404).json({ success: false, error: 'Selected parking facility not found.' });
@@ -392,35 +472,36 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
 
     const slot = await ParkingSlot.findOne({ _id: parkingSlotId, parkingLot: parkingLotId });
     if (!slot) {
-      return res.status(404).json({ success: false, error: 'Selected parking slot bay not found in this lot.' });
+      return res.status(404).json({ success: false, error: 'Selected parking slot not found in this facility.' });
     }
 
     if (slot.status === 'OCCUPIED') {
-      return res.status(409).json({ success: false, error: 'This slot is currently marked OCCUPIED by facility marshals.' });
+      return res.status(409).json({ success: false, error: `Slot ${slot.slotNumber} is currently marked OCCUPIED by facility marshals.` });
     }
 
-    // 5. Booking Conflict Prevention: Check for overlapping active bookings
+    // 4. Time-Window Overlap & Double-Booking Prevention:
+    // Overlap occurs if requestedStart < existingEnd AND requestedEnd > existingStart
     const conflictingBookings = await Booking.find({
       parkingSlot: parkingSlotId,
       bookingDate: bookingDate,
       bookingStatus: 'CONFIRMED'
     });
 
-    const hasOverlap = conflictingBookings.some(b => {
+    const conflict = conflictingBookings.find(b => {
       return (startTime < b.endTime && endTime > b.startTime);
     });
 
-    if (hasOverlap) {
+    if (conflict) {
       return res.status(409).json({
         success: false,
-        error: `Slot Conflict: Slot ${slot.slotNumber} is already booked on ${bookingDate} between ${conflictingBookings[0].startTime} and ${conflictingBookings[0].endTime}. Please choose another time or bay.`
+        error: `Slot Conflict: Slot ${slot.slotNumber} is already booked on ${bookingDate} between ${conflict.startTime} and ${conflict.endTime}. Please choose another bay or time window.`
       });
     }
 
-    // 6. Calculate total amount
+    // 5. Calculate total cost
     const totalAmount = durationNum * lot.hourlyRate;
 
-    // 7. Generate unique Booking ID
+    // 6. Generate Unique Booking ID
     let bookingId;
     let isUnique = false;
     while (!isUnique) {
@@ -429,7 +510,7 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
       if (!exists) isUnique = true;
     }
 
-    // 8. Create booking record in MongoDB
+    // 7. Save Booking Document in MongoDB
     const booking = new Booking({
       bookingId,
       user: req.user.id,
@@ -447,7 +528,7 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
 
     await booking.save();
 
-    // 9. Update live slot status if booking is for today's active window
+    // 8. Update live slot status if booking is for current day
     if (bookingDate === todayStr) {
       slot.status = 'RESERVED';
       await slot.save();
@@ -455,7 +536,6 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
 
     await syncLotAvailability(lot._id);
 
-    // Return populated booking
     const populated = await Booking.findById(booking._id)
       .populate('parkingLot', 'name location address hourlyRate')
       .populate('parkingSlot', 'slotNumber slotType')
@@ -463,51 +543,51 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Parking slot booked successfully!',
+      message: 'Parking bay reserved successfully!',
       booking: populated
     });
   } catch (err) {
-    console.error('Create booking error:', err);
-    res.status(500).json({ success: false, error: 'Server error while processing booking.' });
+    console.error('Booking error:', err);
+    res.status(500).json({ success: false, error: 'Server error processing booking.' });
   }
 });
 
-// Get Current User's Bookings
+// Get User's Own Bookings
 app.get('/api/bookings/my-bookings', requireAuth, async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user.id })
-      .populate('parkingLot', 'name location hourlyRate')
+      .populate('parkingLot', 'name location address hourlyRate')
       .populate('parkingSlot', 'slotNumber slotType')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, count: bookings.length, bookings });
   } catch (err) {
-    console.error('Get my bookings error:', err);
-    res.status(500).json({ success: false, error: 'Error fetching your bookings.' });
+    console.error('Get user bookings error:', err);
+    res.status(500).json({ success: false, error: 'Error retrieving user bookings.' });
   }
 });
 
-// Cancel a Booking
+// Cancel a Booking (User or Admin)
 app.put('/api/bookings/:id/cancel', requireAuth, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
-      return res.status(404).json({ success: false, error: 'Booking not found.' });
+      return res.status(404).json({ success: false, error: 'Booking record not found.' });
     }
 
-    // Ensure user owns booking OR user is ADMIN
+    // Only owner of booking or ADMIN can cancel
     if (booking.user.toString() !== req.user.id.toString() && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ success: false, error: 'You are not authorized to cancel this booking.' });
+      return res.status(403).json({ success: false, error: 'Unauthorized to cancel this booking.' });
     }
 
     if (booking.bookingStatus === 'CANCELLED') {
-      return res.status(400).json({ success: false, error: 'This booking is already cancelled.' });
+      return res.status(400).json({ success: false, error: 'This booking has already been cancelled.' });
     }
 
     booking.bookingStatus = 'CANCELLED';
     await booking.save();
 
-    // Free up slot status
+    // Free up slot status in MongoDB
     const slot = await ParkingSlot.findById(booking.parkingSlot);
     if (slot && slot.status === 'RESERVED') {
       slot.status = 'AVAILABLE';
@@ -516,34 +596,84 @@ app.put('/api/bookings/:id/cancel', requireAuth, async (req, res) => {
 
     await syncLotAvailability(booking.parkingLot);
 
-    res.json({ success: true, message: `Booking #${booking.bookingId} cancelled successfully.`, booking });
+    res.json({
+      success: true,
+      message: `Booking #${booking.bookingId} cancelled and slot released back to facility.`,
+      booking
+    });
   } catch (err) {
     console.error('Cancel booking error:', err);
     res.status(500).json({ success: false, error: 'Error cancelling booking.' });
   }
 });
 
-// Get All Bookings (Admin Only)
+// Get All Bookings (Admin Only, supports search/filter)
 app.get('/api/bookings/all', requireAdmin, async (req, res) => {
   try {
-    const bookings = await Booking.find()
+    const { status, search } = req.query;
+    let query = {};
+
+    if (status && status !== 'ALL') {
+      query.bookingStatus = status;
+    }
+
+    if (search) {
+      query.$or = [
+        { bookingId: { $regex: search, $options: 'i' } },
+        { vehicleNumber: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const bookings = await Booking.find(query)
       .populate('user', 'name email phone vehicleNo')
       .populate('parkingLot', 'name location')
-      .populate('parkingSlot', 'slotNumber')
+      .populate('parkingSlot', 'slotNumber slotType')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, count: bookings.length, bookings });
   } catch (err) {
     console.error('Get all bookings error:', err);
-    res.status(500).json({ success: false, error: 'Error fetching platform bookings.' });
+    res.status(500).json({ success: false, error: 'Error retrieving platform bookings.' });
+  }
+});
+
+// Admin Update Booking Status (e.g. COMPLETED / CANCELLED)
+app.put('/api/admin/bookings/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid booking status.' });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ success: false, error: 'Booking record not found.' });
+    }
+
+    booking.bookingStatus = status;
+    await booking.save();
+
+    if (status === 'CANCELLED' || status === 'COMPLETED') {
+      const slot = await ParkingSlot.findById(booking.parkingSlot);
+      if (slot && slot.status === 'RESERVED') {
+        slot.status = 'AVAILABLE';
+        await slot.save();
+      }
+      await syncLotAvailability(booking.parkingLot);
+    }
+
+    res.json({ success: true, message: `Booking #${booking.bookingId} status updated to ${status}.`, booking });
+  } catch (err) {
+    console.error('Admin update booking error:', err);
+    res.status(500).json({ success: false, error: 'Error updating booking status.' });
   }
 });
 
 // ==========================================================================
-// 4. ADMIN MANAGEMENT APIS
+// 4. ADMIN MANAGEMENT REST APIS
 // ==========================================================================
 
-// Add Parking Lot
+// Create Parking Facility
 app.post('/api/admin/parking-lots', requireAdmin, async (req, res) => {
   try {
     const { name, location, address, description, totalSlots, hourlyRate, operatingHours } = req.body;
@@ -570,7 +700,7 @@ app.post('/api/admin/parking-lots', requireAdmin, async (req, res) => {
 
     await lot.save();
 
-    // Automatically create parking slots for the new lot (Lanes A & B)
+    // Auto-generate bays for Lanes A and B
     const slotCount = Number(totalSlots);
     const slots = [];
     const half = Math.ceil(slotCount / 2);
@@ -589,12 +719,12 @@ app.post('/api/admin/parking-lots', requireAdmin, async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Parking facility and slots created successfully.', lot });
   } catch (err) {
-    console.error('Admin add lot error:', err);
+    console.error('Admin create lot error:', err);
     res.status(500).json({ success: false, error: 'Error creating parking facility.' });
   }
 });
 
-// Update Parking Lot
+// Update Parking Facility
 app.put('/api/admin/parking-lots/:id', requireAdmin, async (req, res) => {
   try {
     const { name, location, address, description, hourlyRate, operatingHours } = req.body;
@@ -619,7 +749,7 @@ app.put('/api/admin/parking-lots/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// Delete Parking Lot
+// Delete Parking Facility
 app.delete('/api/admin/parking-lots/:id', requireAdmin, async (req, res) => {
   try {
     const lotId = req.params.id;
@@ -628,18 +758,18 @@ app.delete('/api/admin/parking-lots/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Parking facility not found.' });
     }
 
-    // Delete associated slots and lot
+    // Cascade delete slots and facility
     await ParkingSlot.deleteMany({ parkingLot: lotId });
     await ParkingLot.findByIdAndDelete(lotId);
 
-    res.json({ success: true, message: `Facility "${lot.name}" and its slots deleted successfully.` });
+    res.json({ success: true, message: `Facility "${lot.name}" and its bays deleted successfully.` });
   } catch (err) {
     console.error('Admin delete lot error:', err);
-    res.status(500).json({ success: false, error: 'Error deleting parking lot.' });
+    res.status(500).json({ success: false, error: 'Error deleting parking facility.' });
   }
 });
 
-// Add Individual Parking Slot
+// Add Slot Bay to Facility
 app.post('/api/admin/parking-lots/:id/slots', requireAdmin, async (req, res) => {
   try {
     const lotId = req.params.id;
@@ -654,14 +784,15 @@ app.post('/api/admin/parking-lots/:id/slots', requireAdmin, async (req, res) => 
       return res.status(404).json({ success: false, error: 'Parking facility not found.' });
     }
 
-    const existing = await ParkingSlot.findOne({ parkingLot: lotId, slotNumber: slotNumber.trim().toUpperCase() });
+    const normalizedSlot = slotNumber.trim().toUpperCase();
+    const existing = await ParkingSlot.findOne({ parkingLot: lotId, slotNumber: normalizedSlot });
     if (existing) {
-      return res.status(409).json({ success: false, error: `Slot ${slotNumber} already exists in this facility.` });
+      return res.status(409).json({ success: false, error: `Slot ${normalizedSlot} already exists in this facility.` });
     }
 
     const slot = new ParkingSlot({
       parkingLot: lotId,
-      slotNumber: slotNumber.trim().toUpperCase(),
+      slotNumber: normalizedSlot,
       slotType: slotType || 'Car',
       status: 'AVAILABLE'
     });
@@ -672,11 +803,11 @@ app.post('/api/admin/parking-lots/:id/slots', requireAdmin, async (req, res) => 
     res.status(201).json({ success: true, message: 'Slot bay created.', slot });
   } catch (err) {
     console.error('Add slot error:', err);
-    res.status(500).json({ success: false, error: 'Error creating slot.' });
+    res.status(500).json({ success: false, error: 'Error adding slot bay.' });
   }
 });
 
-// Update Slot Status (Available, Occupied, Reserved)
+// Update Slot Status (Override status)
 app.put('/api/admin/slots/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
@@ -695,12 +826,12 @@ app.put('/api/admin/slots/:id/status', requireAdmin, async (req, res) => {
 
     res.json({ success: true, message: `Slot ${slot.slotNumber} status updated to ${status}.`, slot });
   } catch (err) {
-    console.error('Update slot status error:', err);
+    console.error('Update slot error:', err);
     res.status(500).json({ success: false, error: 'Error updating slot status.' });
   }
 });
 
-// Admin Dashboard Overview Statistics
+// Admin Stats
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   try {
     const totalLots = await ParkingLot.countDocuments();
@@ -744,17 +875,14 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
 // 5. PROTECTED ROUTE GUARDS (BEFORE STATIC SERVING)
 // ==========================================================================
 
-// Protect Admin Portal URL: STRICTLY requires ADMIN role
 app.get(['/admin.html', '/admin'], requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Protect User Dashboard URL: Requires authenticated user
 app.get(['/dashboard.html', '/dashboard'], requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// Protect Booking Page URL: Requires authenticated user
 app.get(['/booking.html', '/booking'], requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'booking.html'));
 });
@@ -764,25 +892,23 @@ app.get(['/booking.html', '/booking'], requireAuth, (req, res) => {
 // ==========================================================================
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     platform: 'Smart Parking Platform',
     hackathon: 'SR University 2026',
     database: mongoose.connection.readyState === 1 ? 'Connected to smart_parking_db' : 'Disconnected',
-    models: ['User', 'ParkingLot', 'ParkingSlot', 'Booking', 'Session'],
-    security: 'Server-side Role-Based Access Control Active'
+    authEngine: 'JSON Web Token (JWT) + MongoDB Session Store',
+    models: ['User', 'ParkingLot', 'ParkingSlot', 'Booking', 'Session']
   });
 });
 
-// Root Route fallback
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ==========================================================================
-// 7. START SERVER & CONNECT DATABASE
+// 7. START SERVER & MONGODB CONNECTION
 // ==========================================================================
 mongoose.connect(MONGODB_URI)
   .then(async () => {

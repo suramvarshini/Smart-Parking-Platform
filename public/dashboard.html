@@ -43,18 +43,18 @@
             <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 0;">Driver Dashboard</h1>
             <span class="badge badge-info" id="userRoleBadge">ROLE: USER</span>
           </div>
-          <p style="color: var(--text-muted); font-size: 0.95rem;">Monitor live parking availability and manage your current reservations.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Monitor live parking availability, reserve slots and manage your active digital passes.</p>
         </div>
         <div>
-          <a href="parking-lots.html" class="btn btn-primary">+ Reserve New Slot</a>
+          <a href="#quickBookSection" class="btn btn-primary">+ Reserve New Bay</a>
         </div>
       </div>
 
-      <!-- Live Statistics Cards (Aggregated live from MongoDB) -->
+      <!-- Live Statistics Cards (MongoDB Aggregated) -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-info">
-            <h3>Total Slots</h3>
+            <h3>Campus Total Bays</h3>
             <div class="stat-number" id="dashTotal">...</div>
           </div>
           <div class="stat-icon">🅿️</div>
@@ -62,7 +62,7 @@
 
         <div class="stat-card stat-available">
           <div class="stat-info">
-            <h3>Available</h3>
+            <h3>Available Now</h3>
             <div class="stat-number" id="dashAvail">...</div>
           </div>
           <div class="stat-icon">🟢</div>
@@ -70,7 +70,7 @@
 
         <div class="stat-card stat-occupied">
           <div class="stat-info">
-            <h3>Occupied</h3>
+            <h3>Occupied / Reserved</h3>
             <div class="stat-number" id="dashOcc">...</div>
           </div>
           <div class="stat-icon">🔴</div>
@@ -85,16 +85,16 @@
         </div>
       </div>
 
-      <!-- My Active & Recent Bookings (MongoDB Powered) -->
-      <div class="card" style="margin-bottom: 30px;">
+      <!-- SECTION 1: MY BOOKINGS TABLE -->
+      <div class="card" style="margin-bottom: 34px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap:wrap; gap:10px;">
           <div>
-            <h2 class="card-title" style="margin-bottom: 2px;">My Bookings</h2>
-            <p class="card-subtitle" style="margin-bottom: 0;">Live reservations retrieved from MongoDB</p>
+            <h2 class="card-title" style="margin-bottom: 2px;">My Parking Reservations</h2>
+            <p class="card-subtitle" style="margin-bottom: 0;">Live booking history retrieved from MongoDB</p>
           </div>
           <div>
             <button class="btn btn-outline btn-sm" onclick="filterBookings('ALL')">All</button>
-            <button class="btn btn-outline btn-sm" onclick="filterBookings('CONFIRMED')">Active</button>
+            <button class="btn btn-outline btn-sm" onclick="filterBookings('CONFIRMED')">Active Passes</button>
             <button class="btn btn-outline btn-sm" onclick="filterBookings('CANCELLED')">Cancelled</button>
           </div>
         </div>
@@ -103,9 +103,9 @@
           <table class="table" id="bookingsTable">
             <thead>
               <tr>
-                <th>Booking ID</th>
-                <th>Parking Lot</th>
-                <th>Slot Bay</th>
+                <th>Pass ID</th>
+                <th>Facility Name</th>
+                <th>Assigned Bay</th>
                 <th>Date</th>
                 <th>Time Window</th>
                 <th>Duration</th>
@@ -124,10 +124,27 @@
         </div>
       </div>
 
-      <!-- Quick Tips Banner for Students / Faculty -->
-      <div class="alert alert-info">
-        <div>
-          <strong>📌 Real-Time Reservation Guarantee:</strong> Your parking passes are securely validated and managed in MongoDB. Cancelled bookings instantly free up parking bay availability.
+      <!-- SECTION 2: QUICK BROWSE & BOOK PARKING (MongoDB Integrated) -->
+      <div id="quickBookSection" class="card" style="margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 class="card-title" style="margin-bottom: 2px;">Find & Reserve Parking Facilities</h2>
+            <p class="card-subtitle" style="margin-bottom: 0;">Search lots by campus landmark and filter by vehicle type</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <input type="text" id="dashLotSearch" class="form-control" style="width: 220px;" placeholder="Search facility name..." onkeyup="filterDashLots()">
+            <select id="dashVehicleFilter" class="form-control" style="width: 150px;" onchange="filterDashLots()">
+              <option value="All">All Vehicle Types</option>
+              <option value="Car">Cars (4-Wheelers)</option>
+              <option value="Bike">Bikes (2-Wheelers)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="lot-grid" id="dashLotsContainer">
+          <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
+            Loading facilities from database...
+          </div>
         </div>
       </div>
 
@@ -164,11 +181,12 @@
   <script src="js/main.js"></script>
   <script>
     let myBookingsList = [];
+    let allLotsList = [];
 
     async function initUserDashboard() {
       // 1. Fetch user identity
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await window.authFetch('/api/auth/me');
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
@@ -180,14 +198,23 @@
         console.error('Session load error', e);
       }
 
-      // 2. Fetch live statistics from all lots
+      // 2. Fetch live statistics and lots
+      await loadDashboardLots();
+
+      // 3. Fetch real bookings from MongoDB
+      await loadUserBookings();
+    }
+
+    async function loadDashboardLots() {
+      const container = document.getElementById('dashLotsContainer');
       try {
         const lotRes = await fetch('/api/parking-lots');
         if (lotRes.ok) {
           const lotData = await lotRes.json();
-          const lots = lotData.lots || [];
+          allLotsList = lotData.lots || [];
+          
           let total = 0, avail = 0, occ = 0;
-          lots.forEach(l => {
+          allLotsList.forEach(l => {
             total += l.totalSlots || 0;
             avail += l.availableSlots || 0;
             occ += l.occupiedSlots || 0;
@@ -195,19 +222,68 @@
           document.getElementById('dashTotal').textContent = total;
           document.getElementById('dashAvail').textContent = avail;
           document.getElementById('dashOcc').textContent = occ;
+
+          renderDashLots(allLotsList);
         }
       } catch (e) {
-        console.error('Stats error', e);
+        console.error('Lots error', e);
+        container.innerHTML = '<div class="alert alert-warning">Could not load parking lots.</div>';
+      }
+    }
+
+    function renderDashLots(lots) {
+      const container = document.getElementById('dashLotsContainer');
+      if (!lots || lots.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px; color:var(--text-muted);">No parking facilities matched your filter.</div>';
+        return;
       }
 
-      // 3. Fetch real bookings from MongoDB
-      await loadUserBookings();
+      container.innerHTML = lots.map(l => `
+        <div class="lot-card">
+          <div class="lot-header">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <h3 class="lot-title" style="font-size:1.15rem;">${l.name}</h3>
+              <span class="badge ${l.availableSlots > 0 ? 'badge-available' : 'badge-occupied'}">
+                ${l.availableSlots > 0 ? `${l.availableSlots} Open` : 'Full'}
+              </span>
+            </div>
+            <div class="lot-location" style="font-size:0.85rem;">
+              <span>📍 ${l.location}</span>
+            </div>
+          </div>
+          <div class="lot-body" style="padding:14px;">
+            <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;">${l.description || 'Monitored campus parking zone.'}</p>
+            <div style="display:flex; justify-content:space-between; background:var(--bg-subtle); padding:8px 12px; border-radius:6px; font-size:0.85rem;">
+              <span>Tariff: <strong>₹${l.hourlyRate}/hr</strong></span>
+              <span>Hours: <strong>${l.operatingHours || '24/7'}</strong></span>
+            </div>
+          </div>
+          <div class="lot-footer" style="padding:10px 14px;">
+            <span style="font-size:0.8rem; color:var(--text-muted);">${l.totalSlots} Total Bays</span>
+            <a href="slot-selection.html?lotId=${l._id}&lotName=${encodeURIComponent(l.name)}&rate=${l.hourlyRate}" class="btn btn-primary btn-sm">
+              Select Bay →
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterDashLots() {
+      const search = document.getElementById('dashLotSearch').value.toLowerCase().trim();
+      const vehicle = document.getElementById('dashVehicleFilter').value;
+
+      const filtered = allLotsList.filter(l => {
+        const matchesName = l.name.toLowerCase().includes(search) || l.location.toLowerCase().includes(search);
+        return matchesName;
+      });
+
+      renderDashLots(filtered);
     }
 
     async function loadUserBookings() {
       const tbody = document.getElementById('bookingsBody');
       try {
-        const res = await fetch('/api/bookings/my-bookings');
+        const res = await window.authFetch('/api/bookings/my-bookings');
         const data = await res.json();
 
         if (!res.ok || !data.success) {
@@ -231,7 +307,7 @@
     function renderBookingsTable(bookings) {
       const tbody = document.getElementById('bookingsBody');
       if (!bookings || bookings.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">You have no reservations recorded yet. <a href="parking-lots.html">Book your first slot!</a></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">You have no reservations recorded yet. <a href="#quickBookSection">Book your first slot below!</a></td></tr>`;
         return;
       }
 
@@ -286,7 +362,7 @@
       }
 
       try {
-        const res = await fetch(`/api/bookings/${id}/cancel`, { method: 'PUT' });
+        const res = await window.authFetch(`/api/bookings/${id}/cancel`, { method: 'PUT' });
         const data = await res.json();
 
         if (!res.ok || !data.success) {
@@ -295,7 +371,9 @@
         }
 
         window.showAlert(`Booking #${bookingId} has been cancelled and slot released.`, 'success');
+        // Refresh both user bookings and live lots stats without full reload
         await loadUserBookings();
+        await loadDashboardLots();
       } catch (err) {
         console.error('Cancel error:', err);
         window.showAlert('Network error cancelling booking.', 'warning');
@@ -324,15 +402,6 @@
 
     function closeModal() {
       document.getElementById('ticketModal').style.display = 'none';
-    }
-
-    async function handleLogout() {
-      try {
-        await fetch('/api/auth/logout', { method: 'POST' });
-      } catch (e) {
-        console.error(e);
-      }
-      window.location.href = 'login.html';
     }
 
     document.addEventListener('DOMContentLoaded', initUserDashboard);

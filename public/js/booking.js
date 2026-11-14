@@ -1,5 +1,5 @@
 /**
- * Smart Parking Platform - Real Booking Submission & Confirmation Logic
+ * Smart Parking Platform - Real Booking Submission & Confirmation Engine
  * SR University Web Technologies & Mobile Programming Hackathon 2026
  */
 
@@ -8,42 +8,66 @@ document.addEventListener('DOMContentLoaded', async () => {
   const lotId = urlParams.get('lotId');
   const slotId = urlParams.get('slotId');
   const lotName = urlParams.get('lot') || 'Campus Parking Facility';
-  const slotNo = urlParams.get('slot') || 'Bay';
+  const slotNo = urlParams.get('slot') || 'A-01';
   const rate = parseInt(urlParams.get('rate') || '20', 10);
 
-  // Set default view values
+  const paramDate = urlParams.get('date');
+  const paramStart = urlParams.get('startTime');
+  const paramDuration = urlParams.get('duration');
+  const paramVehicle = urlParams.get('vehicleType');
+
+  // Display initial labels
   document.getElementById('summaryLot').textContent = lotName;
   document.getElementById('summarySlot').textContent = slotNo;
   document.getElementById('summaryRate').textContent = `₹${rate} / hr`;
   document.getElementById('formSlot').value = slotNo;
   document.getElementById('formLot').value = lotName;
 
-  // Set default date to today
+  // Set date
   const today = new Date().toISOString().split('T')[0];
   const dateInput = document.getElementById('bookingDate');
   if (dateInput) {
-    dateInput.value = today;
+    dateInput.value = paramDate || today;
     dateInput.min = today;
   }
 
-  // Set default start time to next round hour
+  // Set start time
   const timeInput = document.getElementById('startTime');
   if (timeInput) {
-    const now = new Date();
-    const hours = String((now.getHours() + 1) % 24).padStart(2, '0');
-    timeInput.value = `${hours}:00`;
+    if (paramStart) {
+      timeInput.value = paramStart;
+    } else {
+      const now = new Date();
+      const hours = String((now.getHours() + 1) % 24).padStart(2, '0');
+      timeInput.value = `${hours}:00`;
+    }
   }
 
-  // Pre-fill user profile if authenticated
+  // Set duration
+  const durationInput = document.getElementById('duration');
+  if (durationInput && paramDuration) {
+    durationInput.value = paramDuration;
+  }
+
+  // Set vehicle type
+  const vehicleInput = document.getElementById('vehicleType');
+  if (vehicleInput && paramVehicle && paramVehicle !== 'All') {
+    vehicleInput.value = paramVehicle;
+  }
+
+  // Pre-fill user profile from JWT session
   try {
-    const meRes = await fetch('/api/auth/me');
+    const meRes = await window.authFetch('/api/auth/me');
     if (meRes.ok) {
       const meData = await meRes.json();
       if (meData.user) {
         const nameInput = document.getElementById('driverName');
         const phoneInput = document.getElementById('contactPhone');
-        if (nameInput && !nameInput.value) nameInput.value = meData.user.name;
-        if (phoneInput && !phoneInput.value) phoneInput.value = meData.user.phone || '';
+        const vehicleNumberInput = document.getElementById('vehicleNumber');
+
+        if (nameInput) nameInput.value = meData.user.name || '';
+        if (phoneInput) phoneInput.value = meData.user.phone || '';
+        if (vehicleNumberInput && meData.user.vehicleNo) vehicleNumberInput.value = meData.user.vehicleNo;
       }
     }
   } catch (e) {
@@ -61,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('summaryTotal').textContent = `₹${total}`;
   }
 
-  document.getElementById('duration').addEventListener('change', updateCost);
+  if (durationInput) durationInput.addEventListener('change', updateCost);
   updateCost();
 
   // Handle Real Form Submission
@@ -89,10 +113,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Processing Reservation with Database...';
+    submitBtn.textContent = 'Saving Reservation in MongoDB...';
 
     try {
-      const res = await fetch('/api/bookings', {
+      const res = await window.authFetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const booking = data.booking;
 
-      // Populate confirmation view with real MongoDB data
+      // Populate confirmation voucher view
       const bookingView = document.getElementById('bookingView');
       const confirmationView = document.getElementById('confirmationView');
 

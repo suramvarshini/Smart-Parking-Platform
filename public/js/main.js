@@ -1,9 +1,9 @@
 /**
- * Smart Parking Platform - Main Frontend Utilities
+ * Smart Parking Platform - Main Frontend Utilities & JWT Interceptor
  * SR University Web Technologies & Mobile Programming Hackathon 2026
  */
 
-// Global Notification / Alert helper (available immediately)
+// Global Notification / Alert helper
 window.showAlert = function (message, type = 'info') {
   const alertBox = document.createElement('div');
   alertBox.className = `alert alert-${type}`;
@@ -16,6 +16,29 @@ window.showAlert = function (message, type = 'info') {
     container.insertBefore(alertBox, container.firstChild);
     setTimeout(() => alertBox.remove(), 4000);
   }
+};
+
+// Authenticated Fetch Wrapper with JWT Authorization Header
+window.authFetch = async function (url, options = {}) {
+  const token = localStorage.getItem('auth_token');
+  const headers = options.headers || {};
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetch(url, { ...options, headers });
+};
+
+// Global Logout Handler
+window.handleLogout = async function () {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch (e) {
+    console.error('Logout error:', e);
+  }
+  localStorage.removeItem('auth_token');
+  window.location.href = 'login.html';
 };
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -175,6 +175,9 @@
         }
 
         const user = data.user;
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
         window.showAlert(`Authenticated as ${user.name} (${user.role}). Redirecting...`, 'success');
 
         setTimeout(() => {

@@ -40,7 +40,7 @@
         <div>
           <span class="badge badge-info" style="margin-bottom: 6px;">Visual Bay Selection (MongoDB)</span>
           <h1 id="selectedLotTitle" style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">Loading Facility...</h1>
-          <p style="color: var(--text-muted); font-size: 0.95rem;">Click on any green available parking bay to select and proceed to booking.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Select your arrival time window below to view live slot availability.</p>
         </div>
         <div>
           <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Standard Tariff:</span>
@@ -48,19 +48,64 @@
         </div>
       </div>
 
+      <!-- Time Window & Vehicle Filter Bar (Complete Booking Workflow Step 2-5) -->
+      <div class="card" style="margin-bottom: 24px; padding: 18px 20px; background: #fff; border-left: 4px solid var(--secondary);">
+        <div style="font-weight: 700; color: var(--primary); margin-bottom: 12px; font-size: 0.95rem;">
+          📅 Step 1: Select Your Parking Schedule & Vehicle Type
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: flex-end;">
+          <div>
+            <label class="form-label" for="timeFilterDate" style="font-size: 0.82rem;">Booking Date</label>
+            <input type="date" id="timeFilterDate" class="form-control" style="padding: 8px 12px; font-size: 0.9rem;">
+          </div>
+
+          <div>
+            <label class="form-label" for="timeFilterStart" style="font-size: 0.82rem;">Arrival Time</label>
+            <input type="time" id="timeFilterStart" class="form-control" style="padding: 8px 12px; font-size: 0.9rem;">
+          </div>
+
+          <div>
+            <label class="form-label" for="timeFilterDuration" style="font-size: 0.82rem;">Duration (Hours)</label>
+            <select id="timeFilterDuration" class="form-control" style="padding: 8px 12px; font-size: 0.9rem;">
+              <option value="1">1 Hour</option>
+              <option value="2" selected>2 Hours</option>
+              <option value="3">3 Hours</option>
+              <option value="4">4 Hours</option>
+              <option value="6">6 Hours</option>
+              <option value="8">Full Day (8 Hours)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="timeFilterVehicle" style="font-size: 0.82rem;">Vehicle Type</label>
+            <select id="timeFilterVehicle" class="form-control" style="padding: 8px 12px; font-size: 0.9rem;">
+              <option value="All">All Bays</option>
+              <option value="Car" selected>Car (4-Wheeler)</option>
+              <option value="Bike">Bike (2-Wheeler)</option>
+            </select>
+          </div>
+
+          <div>
+            <button id="btnCheckAvailability" class="btn btn-secondary btn-block" style="padding: 9px; font-size: 0.9rem;">
+              Check Availability
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Color Legend Bar -->
       <div class="parking-legend">
         <div class="legend-item">
           <div class="legend-box legend-available"></div>
-          <span>Green: Available</span>
+          <span>Green: Available for Time Window</span>
         </div>
         <div class="legend-item">
           <div class="legend-box legend-occupied"></div>
-          <span>Red: Occupied</span>
+          <span>Red: Occupied / Maintenance</span>
         </div>
         <div class="legend-item">
           <div class="legend-box legend-reserved"></div>
-          <span>Orange: Reserved</span>
+          <span>Orange: Reserved by Another Driver</span>
         </div>
         <div class="legend-item">
           <div class="legend-box legend-selected"></div>
@@ -104,12 +149,12 @@
             <div id="selectedBayDisplay" style="font-size: 1.05rem; color: var(--primary);">
               <em>Click any green bay above to select</em>
             </div>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time MongoDB slot reservation</span>
+            <span id="selectedBayMeta" style="font-size: 0.8rem; color: var(--text-muted);">Live validation against overlapping reservations</span>
           </div>
 
           <div>
             <button id="proceedBookingBtn" class="btn btn-outline" disabled>
-              Select a Slot to Continue
+              Select an Available Slot to Continue
             </button>
           </div>
         </div>
@@ -125,7 +170,7 @@
         <span class="footer-tag">Smart Parking Platform</span> — SR University Hackathon 2026
       </div>
       <div>
-        <span>Real-Time Mongoose Slot Layout</span>
+        <span>Real-Time Mongoose Slot Layout & Conflict Engine</span>
       </div>
     </div>
   </footer>
